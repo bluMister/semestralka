@@ -20,18 +20,18 @@ Cieľom semestrálnej práce je vytvoriť sieťovú aplikáciu s využitím sock
   * pred obhajobou semestrálnej práce je nutné vyučujúcemu, u ktorého budete prácu obhajovať, udeliť prístupové právo **Reporter**,
 * so semestrálnou prácou odovzdávate:
   * programátorskú dokumentáciu (podľa zverejnenej šablóny), v ktorej popíšete:
-* štruktúru projektu (s využitím UML),
-* kde a ako ste použili sockety,
-* kde a ako ste použili vlákna,
-* aký synchronizačný problém ste riešili a aké prostriedky ste využili pri jeho riešení,
-* ďalšie kľúčové problémy, ktoré ste v rámci semestrálnej práce riešili,
+    * štruktúru projektu (s využitím UML),
+    * kde a ako ste použili sockety,
+    * kde a ako ste použili vlákna,
+    * aký synchronizačný problém ste riešili a aké prostriedky ste využili pri jeho riešení,
+    * ďalšie kľúčové problémy, ktoré ste v rámci semestrálnej práce riešili,
   * používateľskú dokumentáciu, v ktorej popíšete spustenie a ovládanie jednotlivých častí aplikácie,
   * celá semestrálna práca bude zbalená do jedného .zip súboru, ktorý odovzdáte prostredníctvom aktivity na moodli; v .zip súbore budú **iba**:
-* .h súbory,
-* .c/.cpp súbory,
-* Makefile,
-* **ostatné súbory nevyhnutné pre kompiláciu a spustenie aplikácie (textové, grafické a pod.),**
-* programátorská a používateľská dokumentácia.
+    * .h súbory,
+    * .c/.cpp súbory,
+    * Makefile,
+    * **ostatné súbory nevyhnutné pre kompiláciu a spustenie aplikácie (textové, grafické a pod.),**
+    * programátorská a používateľská dokumentácia.
 
 
 # Download manažér.
