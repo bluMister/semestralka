@@ -4,7 +4,7 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_C
-  "/tmp/tmp.Cc70vDlGMv/main.c" "/tmp/tmp.Cc70vDlGMv/cmake-build-debug/CMakeFiles/semestralka.dir/main.c.o"
+  "/tmp/tmp.c4JwXTXy8h/main.c" "/tmp/tmp.c4JwXTXy8h/cmake-build-debug/CMakeFiles/semestralka.dir/main.c.o"
   )
 set(CMAKE_C_COMPILER_ID "GNU")
 
