@@ -8,19 +8,25 @@
 #include<string.h>
 #include<unistd.h>
 
-#define SERV_TCP_PORT 5035
+#define SERV_TCP_PORT 15038
 #define MAX 60
 
 int i, j, tem;
-char buff[4096], t;
+char buff[4096], t[MAX];;
 FILE *f1;
 int main(int arg, char *argv[])
 {
     int sockfd, newsockfd, clength;
     struct sockaddr_in serv_addr,cli_addr;
     char t[MAX], str[MAX];
-    strcpy(t,"exit");
+    strncpy(t, "exit", MAX);
+    t[MAX - 1] = '\0';
     sockfd=socket(AF_INET, SOCK_STREAM,0);
+
+    if (sockfd == -1) {
+        perror("Socket creation failed");
+        exit(EXIT_FAILURE);
+    }
     serv_addr.sin_family=AF_INET;
     serv_addr.sin_addr.s_addr=INADDR_ANY;
     serv_addr.sin_port=htons(SERV_TCP_PORT);
@@ -31,15 +37,19 @@ int main(int arg, char *argv[])
     clength=sizeof(cli_addr);
     newsockfd=accept(sockfd,(struct sockaddr*) &cli_addr,&clength);
     close(sockfd);
-    read(newsockfd, &str, MAX);
+    read(newsockfd, &str, sizeof(str));
     printf("\nClient message\n File Name : %s\n", str);
     f1=fopen(str, "r");
-    while(fgets(buff, 4096, f1)!=NULL)
-    {
-        write(newsockfd, buff,MAX);
-        printf("\n");
+    if (f1 == NULL) {
+        perror("Error opening file");
+        exit(EXIT_FAILURE);
     }
-    fclose(f1);
+    while (fgets(buff, sizeof(buff), f1) != NULL) {
+        write(newsockfd, buff, strlen(buff));
+    }
+    if (f1 != NULL) {
+        fclose(f1);
+    }
     printf("\nFile Transferred\n");
     return 0;
 }
