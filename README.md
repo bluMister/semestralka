@@ -34,12 +34,11 @@ Cieľom semestrálnej práce je vytvoriť sieťovú aplikáciu s využitím sock
     * programátorská a používateľská dokumentácia.
 
 
-# Download manažér.
+# Download manažér
 
 Klientska aplikácia, ktorá dovolí používateľovi pripojiť sa na vzdialený server a pomocou štandardných protokolov stiahnuť obsah dostupný na serveri. Manažér musí podporovať nasledujúce protokoly:
 
-* http, https, ftp, ftps, 
-* bittorent (+ 1 študent),
+* http, https, ftp, ftps,
 
 pričom umožní:
 * naplánovať čas, kedy sa má sťahovanie začať,
