@@ -6,6 +6,7 @@
 #include <netdb.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
+#include <stdbool.h>
 
 #define BUFFER_SIZE 1024
 
@@ -156,47 +157,65 @@ int download_file(const char *url) {
 }
 
 int main() {
-    // Buffer to store user input
-    char url_buffer[256];
+    while(true) {
+        // Buffer to store user input
+        char url_buffer[256];
 
-    //ui
-    printf("\nwelcome to POS Download Manager! \n choose the action:\n");
-    printf("1 - download file\n");
-    printf("2 - schedule download for later\n");
-    printf("3 - manage download directory\n");
-    printf("4 - view download history\n");
-    printf("5 - exit :(\n");
+        //ui
+        printf("\nwelcome to POS Download Manager! \n choose the action:\n");
+        printf("1 - download file\n");
+        printf("2 - schedule download for later\n");
+        printf("3 - manage download directory\n");
+        printf("4 - view download history\n");
+        printf("5 - exit :(\n");
 
-    int choice = 0;
-    scanf("%d", &choice);
+        int choice = 0;
+        scanf("%d", &choice);
 
-    //timer
-    int timer = 0;
-    if(choice == 2){
-        printf("\nzadaj za aky cas v minutach ma stahovanie zacat:\n");
-        scanf("%d", &timer);
-    }
+        switch (choice) {
+            case 1: {
+                // Prompt the user for the URL
+                printf("Enter the URL: ");
+                if (fgets(url_buffer, sizeof(url_buffer), stdin) == NULL) {
+                    fprintf(stderr, "Error reading input\n");
+                    return 1;
+                }
+                // Remove newline character from the end of the URL
+                size_t len = strlen(url_buffer);
+                if (len > 0 && url_buffer[len - 1] == '\n') {
+                    url_buffer[len - 1] = '\0';
+                }
 
-    // Prompt the user for the URL
-    printf("Enter the URL: ");
-    if (fgets(url_buffer, sizeof(url_buffer), stdin) == NULL) {
-        fprintf(stderr, "Error reading input\n");
-        return 1;
-    }
+                // URL of the file to download
+                const char *url = url_buffer;
 
-    // Remove newline character from the end of the URL
-    size_t len = strlen(url_buffer);
-    if (len > 0 && url_buffer[len - 1] == '\n') {
-        url_buffer[len - 1] = '\0';
-    }
-
-    // URL of the file to download
-    const char *url = url_buffer;
-
-    // Download the file
-    if (download_file(url) != 0) {
-        fprintf(stderr, "Error downloading file\n");
-        return 1;
+                // Download the file
+                if (download_file(url) != 0) {
+                    fprintf(stderr, "Error downloading file\n");
+                    return 1;
+                }
+            }
+            case 2: {
+                //timer
+                int timer = 0;
+                if (choice == 2) {
+                    printf("\nzadaj za aky cas v minutach ma stahovanie zacat:\n");
+                    scanf("%d", &timer);
+                }
+            }
+            case 3: {
+                printf("Manager ešte nie je implementovaný");
+            }
+            case 4: {
+                printf("View ešte nie je implementovaný");
+            }
+            case 5: {
+                printf("Exit ešte nie je implementovaný");
+            }
+            default:{
+                printf("Zadal si blbé číslo!");
+            }
+        }
     }
 
     return 0;
