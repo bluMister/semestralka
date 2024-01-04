@@ -23,6 +23,31 @@ int parse_url(const char *url, char *hostname, char *path, int *is_https) {
     return 1;
 }
 
+//function to read download folder path from file
+char *loadDownFolderPath() {
+    FILE *file = fopen("downFolderPath.txt", "r");
+    if (file == NULL) {
+        perror("Error opening file");
+        exit(EXIT_FAILURE);
+    }
+
+    fseek(file, 0, SEEK_END);
+    long size = ftell(file);
+    fseek(file, 0, SEEK_SET);
+
+    char *content = (char *)malloc(size + 1);
+    if (content == NULL) {
+        perror("Error allocating memory");
+        exit(EXIT_FAILURE);
+    }
+
+    fread(content, 1, size, file);
+    content[size] = '\0'; // Null-terminate the string
+
+    fclose(file);
+    return content;
+}
+
 // Function to extract filename from the URL
 const char *extract_filename(const char *url) {
     const char *last_slash = strrchr(url, '/');
@@ -118,7 +143,10 @@ int download_file(const char *url, int timer) {
 
     // Open the output file with the extracted filename
     const char *filename = extract_filename(url);
-    FILE *file = fopen(filename, "wb");
+    const char *downPath = loadDownFolderPath();
+    char *finalPath = (char *)malloc(strlen(downPath) + strlen(filename) + 2);
+    printf("downloading as: " + *finalPath);
+    FILE *file = fopen(finalPath, "wb");
     if (file == NULL) {
         perror("Error opening output file");
         if (is_https) {
@@ -206,6 +234,35 @@ int main() {
         }
     }
 
+    if(choice == 3){
+        FILE *file;
+        const char *filename = "downFolderPath.txt";
+        char userInput[1000]; // Assuming a maximum of 999 characters for a single line
+
+        // Open the file in write mode ("w")
+        file = fopen(filename, "w");
+
+        // Check if the file was opened successfully
+        if (file == NULL) {
+            perror("Error opening file");
+            return 1; // Exit with an error code
+        }
+
+        // Get user input
+        printf("Enter a line of text to write to the file:\n");
+        fgets(userInput, sizeof(userInput), stdin);
+
+        // Clear the input buffer (discard remaining characters in the buffer)
+        int c;
+        while ((c = getchar()) != '\n' && c != EOF);
+
+        // Write user input to the file
+        fprintf(file, "%s", userInput);
+
+        // Close the file
+        fclose(file);
+
+    }
 
     return 0;
 }
