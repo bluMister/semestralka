@@ -6,7 +6,6 @@
 #include <netdb.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
-#include <stdbool.h>
 
 #define BUFFER_SIZE 1024
 
@@ -41,7 +40,7 @@ SSL_CTX *create_ssl_context() {
 }
 
 // Function to download a file from an HTTP or HTTPS server
-int download_file(const char *url) {
+int download_file(const char *url, int timer) {
     char hostname[256];
     char path[256];
     int is_https;
@@ -49,6 +48,11 @@ int download_file(const char *url) {
     // Parse URL to extract hostname and path
     if (parse_url(url, hostname, path, &is_https) != 0) {
         return 1;
+    }
+
+    //check for timer and wiat if necessary
+    if(timer > 0){
+        sleep(timer * 60);
     }
 
     // Resolve hostname to IP address
@@ -157,66 +161,51 @@ int download_file(const char *url) {
 }
 
 int main() {
-    while(true) {
-        // Buffer to store user input
-        char url_buffer[256];
+    // Buffer to store user input
+    char url_buffer[256];
 
-        //ui
-        printf("\nwelcome to POS Download Manager! \n choose the action:\n");
-        printf("1 - download file\n");
-        printf("2 - schedule download for later\n");
-        printf("3 - manage download directory\n");
-        printf("4 - view download history\n");
-        printf("5 - exit :(\n");
+    //ui
+    printf("\nwelcome to POS Download Manager! \n choose the action:\n");
+    printf("1 - download file\n");
+    printf("2 - schedule download for later\n");
+    printf("3 - manage download directory\n");
+    printf("4 - view download history\n");
+    printf("5 - exit :(\n");
 
-        int choice = 0;
-        scanf("%d", &choice);
+    int choice = 0;
+    scanf("%d", &choice);
 
-        switch (choice) {
-            case 1: {
-                // Prompt the user for the URL
-                printf("Enter the URL: ");
-                if (fgets(url_buffer, sizeof(url_buffer), stdin) == NULL) {
-                    fprintf(stderr, "Error reading input\n");
-                    return 1;
-                }
-                // Remove newline character from the end of the URL
-                size_t len = strlen(url_buffer);
-                if (len > 0 && url_buffer[len - 1] == '\n') {
-                    url_buffer[len - 1] = '\0';
-                }
+    if(choice > 0 && choice < 3) {
+        //timer
+        int timer = 0;
+        if (choice == 2) {
+            printf("\nzadaj za aky cas v minutach ma stahovanie zacat:\n");
+            scanf("%d", &timer);
+        }
 
-                // URL of the file to download
-                const char *url = url_buffer;
+        // Prompt the user for the URL
+        printf("Enter the URL: ");
+        if (fgets(url_buffer, sizeof(url_buffer), stdin) == NULL) {
+            fprintf(stderr, "Error reading input\n");
+            return 1;
+        }
 
-                // Download the file
-                if (download_file(url) != 0) {
-                    fprintf(stderr, "Error downloading file\n");
-                    return 1;
-                }
-            }
-            case 2: {
-                //timer
-                int timer = 0;
-                if (choice == 2) {
-                    printf("\nzadaj za aky cas v minutach ma stahovanie zacat:\n");
-                    scanf("%d", &timer);
-                }
-            }
-            case 3: {
-                printf("Manager ešte nie je implementovaný");
-            }
-            case 4: {
-                printf("View ešte nie je implementovaný");
-            }
-            case 5: {
-                printf("Exit ešte nie je implementovaný");
-            }
-            default:{
-                printf("Zadal si blbé číslo!");
-            }
+        // Remove newline character from the end of the URL
+        size_t len = strlen(url_buffer);
+        if (len > 0 && url_buffer[len - 1] == '\n') {
+            url_buffer[len - 1] = '\0';
+        }
+
+        // URL of the file to download
+        const char *url = url_buffer;
+
+        // Download the file
+        if (download_file(url, timer) != 0) {
+            fprintf(stderr, "Error downloading file\n");
+            return 1;
         }
     }
+
 
     return 0;
 }
