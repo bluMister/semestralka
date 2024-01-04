@@ -159,6 +159,24 @@ int main() {
     // Buffer to store user input
     char url_buffer[256];
 
+    //ui
+    printf("\nwelcome to POS Download Manager! \n choose the action:\n");
+    printf("1 - download file\n");
+    printf("2 - schedule download for later\n");
+    printf("3 - manage download directory\n");
+    printf("4 - view download history\n");
+    printf("5 - exit :(\n");
+
+    int choice = 0;
+    scanf("%d", &choice);
+
+    //timer
+    int timer = 0;
+    if(choice == 2){
+        printf("\nzadaj za aky cas v minutach ma stahovanie zacat:\n");
+        scanf("%d", &timer);
+    }
+
     // Prompt the user for the URL
     printf("Enter the URL: ");
     if (fgets(url_buffer, sizeof(url_buffer), stdin) == NULL) {
