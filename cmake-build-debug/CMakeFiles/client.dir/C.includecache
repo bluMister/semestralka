@@ -19,4 +19,8 @@ arpa/inet.h
 -
 netdb.h
 -
+openssl/ssl.h
+-
+openssl/err.h
+-
 
