@@ -9,14 +9,6 @@
 /tmp/tmp.oqyhl6GXco/client.c
 stdio.h
 -
-sys/types.h
--
-sys/socket.h
--
-netinet/in.h
--
-netdb.h
--
 stdlib.h
 -
 string.h
@@ -24,5 +16,7 @@ string.h
 unistd.h
 -
 arpa/inet.h
+-
+netdb.h
 -
 

@@ -16,8 +16,14 @@ int parse_url(const char *url, char *hostname, char *path) {
     return 0;
 }
 
+// Function to extract filename from the URL
+const char *extract_filename(const char *url) {
+    const char *last_slash = strrchr(url, '/');
+    return (last_slash != NULL) ? (last_slash + 1) : url;
+}
+
 // Function to download a file from an HTTP server
-int download_file(const char *url, const char *output_file) {
+int download_file(const char *url) {
     char hostname[256];
     char path[256];
 
@@ -56,8 +62,9 @@ int download_file(const char *url, const char *output_file) {
     // Send HTTP GET request
     dprintf(sockfd, "GET /%s HTTP/1.1\r\nHost: %s\r\n\r\n", path, hostname);
 
-    // Open the output file
-    FILE *file = fopen(output_file, "wb");
+    // Open the output file with the extracted filename
+    const char *filename = extract_filename(url);
+    FILE *file = fopen(filename, "wb");
     if (file == NULL) {
         perror("Error opening output file");
         close(sockfd);
@@ -75,20 +82,33 @@ int download_file(const char *url, const char *output_file) {
     fclose(file);
     close(sockfd);
 
-    printf("Download complete. File saved as %s\n", output_file);
+    printf("Download complete. File saved as %s\n", filename);
 
     return 0;
 }
 
 int main() {
-    // URL of the file to download
-    const char *url = "http://example.com/file.txt";
+    // Buffer to store user input
+    char url_buffer[256];
 
-    // Output file name
-    const char *output_file = "downloaded_file.txt";
+    // Prompt the user for the URL
+    printf("Enter the URL: ");
+    if (fgets(url_buffer, sizeof(url_buffer), stdin) == NULL) {
+        fprintf(stderr, "Error reading input\n");
+        return 1;
+    }
+
+    // Remove newline character from the end of the URL
+    size_t len = strlen(url_buffer);
+    if (len > 0 && url_buffer[len - 1] == '\n') {
+        url_buffer[len - 1] = '\0';
+    }
+
+    // URL of the file to download
+    const char *url = url_buffer;
 
     // Download the file
-    if (download_file(url, output_file) != 0) {
+    if (download_file(url) != 0) {
         fprintf(stderr, "Error downloading file\n");
         return 1;
     }
