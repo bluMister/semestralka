@@ -188,20 +188,11 @@ int download_file(const char *url, int timer) {
     return 0;
 }
 
-int main() {
+int downloadManager(int choice){
+
+
     // Buffer to store user input
     char url_buffer[256];
-
-    //ui
-    printf("\nwelcome to POS Download Manager! \n choose the action:\n");
-    printf("1 - download file\n");
-    printf("2 - schedule download for later\n");
-    printf("3 - manage download directory\n");
-    printf("4 - view download history\n");
-    printf("5 - exit :(\n");
-
-    int choice = 0;
-    scanf("%d", &choice);
 
     if(choice > 0 && choice < 3) {
         //timer
@@ -210,6 +201,8 @@ int main() {
             printf("\nzadaj za aky cas v minutach ma stahovanie zacat:\n");
             scanf("%d", &timer);
         }
+
+        fflush(stdin);
 
         // Prompt the user for the URL
         printf("Enter the URL: ");
@@ -264,5 +257,32 @@ int main() {
 
     }
 
+    //TOTO CISTI INPUT BUFFER!!! BEZ TOHTO SA ZADRHAVA NACITANIE! POUZIVAT ZA KAZDYM NACITANIM Z KLAVESNICE!!!
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF);
+
     return 0;
+
+}
+
+int main() {
+
+    //ui
+    printf("\nwelcome to POS Download Manager! \n choose the action:\n");
+    printf("1 - download file\n");
+    printf("2 - schedule download for later\n");
+    printf("3 - manage download directory\n");
+    printf("4 - view download history\n");
+    printf("5 - exit :(\n");
+
+    int choice = 0;
+    scanf("%d", &choice);
+    fflush(stdin);
+
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF);
+
+    int state = downloadManager(choice);
+
+    return state;
 }
