@@ -19,6 +19,52 @@ typedef struct {
     int cas;
 } VlaknoInfo;
 
+//download logger
+void logger(char *log, bool write) {
+
+    if (write) {
+        time_t t;
+        struct tm *current_time;
+        char buffer[100];
+
+        time(&t);
+        current_time = localtime(&t);
+
+        // Format the date and time
+        strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", current_time);
+
+        // Open a file for writing
+        FILE *file = fopen("downHistory.txt", "w");
+
+        if (file == NULL) {
+            printf("Error opening file!\n");
+        }
+
+        // Write the formatted date and time to the file
+        fprintf(file, "%s\n", buffer + *log);
+
+        // Close the file
+        fclose(file);
+    } else {
+        FILE *file = fopen("output.txt", "r");
+
+        if (file == NULL) {
+            printf("Error opening file for reading!\n");
+        }
+
+        // Read and display the contents of the file
+        printf("Contents of 'output.txt':\n");
+
+        char line[100];
+        while (fgets(line, sizeof(line), file) != NULL) {
+            printf("%s", line);
+        }
+
+        // Close the file
+        fclose(file);
+    }
+}
+
 // Function to extract hostname and path from the URL
 int parse_url(const char *url, char *hostname, char *path, int *is_https) {
     if (sscanf(url, "http://%[^/]/%s", hostname, path) == 2) {
@@ -45,7 +91,7 @@ char *loadDownFolderPath() {
     long size = ftell(file);
     fseek(file, 0, SEEK_SET);
 
-    char *content = (char *)malloc(size + 1);
+    char *content = (char *) malloc(size + 1);
     if (content == NULL) {
         perror("Error allocating memory");
         exit(EXIT_FAILURE);
@@ -86,7 +132,7 @@ int download_file(const char *url, int timer) {
     }
 
     //check for timer and wiat if necessary
-    if(timer > 0){
+    if (timer > 0) {
         sleep(timer * 60);
     }
 
@@ -111,7 +157,7 @@ int download_file(const char *url, int timer) {
     memcpy(&server_addr.sin_addr.s_addr, server->h_addr, server->h_length);
 
     // Connect to the server
-    if (connect(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr)) == -1) {
+    if (connect(sockfd, (struct sockaddr *) &server_addr, sizeof(server_addr)) == -1) {
         perror("Error connecting to server");
         close(sockfd);
         return 1;
@@ -154,8 +200,9 @@ int download_file(const char *url, int timer) {
     // Open the output file with the extracted filename
     const char *filename = extract_filename(url);
     const char *downPath = loadDownFolderPath();
-    char *finalPath = (char *)malloc(strlen(downPath) + strlen(filename) + 2);
-    printf("%s", &"downloading as: " [ *finalPath]);
+    char *finalPath = (char *) malloc(strlen(downPath) + strlen(filename) + 2);
+    printf("%s", &"downloading as: "[*finalPath]);
+    logger(*finalPath, true);
     FILE *file = fopen(finalPath, "wb");
     if (file == NULL) {
         perror("Error opening output file");
@@ -208,95 +255,98 @@ int main() {
         //exit
         if (choice != 5) {
 
-        //download manazer
-        if (prvy) {
-            printf("\nWelcome to POS Download Manager! \n Choose the action:\n");
-        } else {
-            printf("Choose the next action:\n");
-        }
-        printf("1 - download file\n");
-        printf("2 - schedule download for later\n");
-        printf("3 - manage download directory\n");
-        printf("4 - view download history\n");
-        printf("5 - exit :(\n");
+            //download manazer
+            if (prvy) {
+                printf("\nWelcome to POS Download Manager! \n Choose the action:\n");
+            } else {
+                printf("Choose the next action:\n");
+            }
+            printf("1 - download file\n");
+            printf("2 - schedule download for later\n");
+            printf("3 - manage download directory\n");
+            printf("4 - view download history\n");
+            printf("5 - exit :(\n");
 
-        scanf("%d", &choice);
+            scanf("%d", &choice);
 
-        // Buffer to store user input
-        char url_buffer[256];
+            // Buffer to store user input
+            char url_buffer[256];
 
-        if(choice > 0 && choice < 3) {
-            //timer
-            int timer = 0;
-            //printf((const char *) choice);
-            if (choice == 2) {
-                printf("\nzadaj za aky cas v minutach ma stahovanie zacat:\n");
-                scanf("%d", &timer);
-                fflush(stdin);
+            if (choice > 0 && choice < 3) {
+                //timer
+                int timer = 0;
+                //printf((const char *) choice);
+                if (choice == 2) {
+                    printf("\nzadaj za aky cas v minutach ma stahovanie zacat:\n");
+                    scanf("%d", &timer);
+                    fflush(stdin);
+                }
+
+                //čistenie terminálu
+                int c;
+                while ((c = getchar()) != '\n' && c != EOF);
+
+                // Prompt the user for the URL
+                printf("Enter the URL: ");
+                if (fgets(url_buffer, sizeof(url_buffer), stdin) == NULL) {
+                    fprintf(stderr, "Error reading input\n");
+                    return 1;
+                }
+
+                // Remove newline character from the end of the URL
+                size_t len = strlen(url_buffer);
+                if (len > 0 && url_buffer[len - 1] == '\n') {
+                    url_buffer[len - 1] = '\0';
+                }
+
+                // URL of the file to download
+                const char *url = url_buffer;
+
+                // Download the file
+                if (download_file(url, timer) != 0) {
+                    fprintf(stderr, "Error downloading file\n");
+                    return 1;
+                }
             }
 
-            //čistenie terminálu
-            int c;
-            while ((c = getchar()) != '\n' && c != EOF);
+            if (choice == 3) {
+                FILE *file;
+                const char *filename = "downFolderPath.txt";
+                char userInput[1000]; // Assuming a maximum of 999 characters for a single line
 
-            // Prompt the user for the URL
-            printf("Enter the URL: ");
-            if (fgets(url_buffer, sizeof(url_buffer), stdin) == NULL) {
-                fprintf(stderr, "Error reading input\n");
-                return 1;
+                // Open the file in write mode ("w")
+                file = fopen(filename, "w");
+
+                // Check if the file was opened successfully
+                if (file == NULL) {
+                    perror("Error opening file");
+                    return 1; // Exit with an error code
+                }
+
+                // Get user input
+                printf("Enter a directory where manager should be downloading:\n");
+                fgets(userInput, sizeof(userInput), stdin);
+
+                // Clear the input buffer (discard remaining characters in the buffer)
+                int c;
+                while ((c = getchar()) != '\n' && c != EOF);
+
+                // Write user input to the file
+                fprintf(file, "%s", userInput);
+
+                // Close the file
+                fclose(file);
+
             }
 
-            // Remove newline character from the end of the URL
-            size_t len = strlen(url_buffer);
-            if (len > 0 && url_buffer[len - 1] == '\n') {
-                url_buffer[len - 1] = '\0';
+            if (choice == 4){
+                logger( NULL, false);
             }
-
-            // URL of the file to download
-            const char *url = url_buffer;
-
-            // Download the file
-            if (download_file(url, timer) != 0) {
-                fprintf(stderr, "Error downloading file\n");
-                return 1;
-            }
-        }
-
-        if(choice == 3){
-            FILE *file;
-            const char *filename = "downFolderPath.txt";
-            char userInput[1000]; // Assuming a maximum of 999 characters for a single line
-
-            // Open the file in write mode ("w")
-            file = fopen(filename, "w");
-
-            // Check if the file was opened successfully
-            if (file == NULL) {
-                perror("Error opening file");
-                return 1; // Exit with an error code
-            }
-
-            // Get user input
-            printf("Enter a directory where manager should be downloading:\n");
-            fgets(userInput, sizeof(userInput), stdin);
-
-            // Clear the input buffer (discard remaining characters in the buffer)
-            int c;
-            while ((c = getchar()) != '\n' && c != EOF);
-
-            // Write user input to the file
-            fprintf(file, "%s", userInput);
-
-            // Close the file
-            fclose(file);
-
-        }
-
-        //TOTO CISTI INPUT BUFFER!!! BEZ TOHTO SA ZADRHAVA NACITANIE! POUZIVAT ZA KAZDYM NACITANIM Z KLAVESNICE!!!
+            //TOTO CISTI INPUT BUFFER!!! BEZ TOHTO SA ZADRHAVA NACITANIE! POUZIVAT ZA KAZDYM NACITANIM Z KLAVESNICE!!!
 //    int c;
 //    while ((c = getchar()) != '\n' && c != EOF);
 
-        //return 0;
+            //return 0;
 
         }
         prvy = false;
