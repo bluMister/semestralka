@@ -198,90 +198,17 @@ int download_file(const char *url, int timer) {
     return 0;
 }
 
-int downloadManager(int choice){
-
-
-    // Buffer to store user input
-    char url_buffer[256];
-
-    if(choice > 0 && choice < 3) {
-        //timer
-        int timer = 0;
-        //printf((const char *) choice);
-        if (choice == 2) {
-            printf("\nzadaj za aky cas v minutach ma stahovanie zacat:\n");
-            scanf("%d", &timer);
-
-            fflush(stdin);
-        }
-
-        // Prompt the user for the URL
-        printf("Enter the URL: ");
-        if (fgets(url_buffer, sizeof(url_buffer), stdin) == NULL) {
-            fprintf(stderr, "Error reading input\n");
-            return 1;
-        }
-
-        // Remove newline character from the end of the URL
-        size_t len = strlen(url_buffer);
-        if (len > 0 && url_buffer[len - 1] == '\n') {
-            url_buffer[len - 1] = '\0';
-        }
-
-        // URL of the file to download
-        const char *url = url_buffer;
-
-        // Download the file
-        if (download_file(url, timer) != 0) {
-            fprintf(stderr, "Error downloading file\n");
-            return 1;
-        }
-    }
-
-    if(choice == 3){
-        FILE *file;
-        const char *filename = "downFolderPath.txt";
-        char userInput[1000]; // Assuming a maximum of 999 characters for a single line
-
-        // Open the file in write mode ("w")
-        file = fopen(filename, "w");
-
-        // Check if the file was opened successfully
-        if (file == NULL) {
-            perror("Error opening file");
-            return 1; // Exit with an error code
-        }
-
-        // Get user input
-        printf("Enter a directory where manager should be downloading:\n");
-        fgets(userInput, sizeof(userInput), stdin);
-
-        // Clear the input buffer (discard remaining characters in the buffer)
-        int c;
-        while ((c = getchar()) != '\n' && c != EOF);
-
-        // Write user input to the file
-        fprintf(file, "%s", userInput);
-
-        // Close the file
-        fclose(file);
-
-    }
-
-    //TOTO CISTI INPUT BUFFER!!! BEZ TOHTO SA ZADRHAVA NACITANIE! POUZIVAT ZA KAZDYM NACITANIM Z KLAVESNICE!!!
-//    int c;
-//    while ((c = getchar()) != '\n' && c != EOF);
-
-    //return 0;
-
-}
-
 int main() {
     bool prvy = true;
     int choice = 0;
     int state;
     while (choice != 5) {
         //ui
+
+        //exit
+        if (choice != 5) {
+
+        //download manazer
         if (prvy) {
             printf("\nWelcome to POS Download Manager! \n Choose the action:\n");
         } else {
@@ -295,14 +222,82 @@ int main() {
 
         scanf("%d", &choice);
 
-        //exit
-        if (choice != 5) {
-            fflush(stdin);
+        // Buffer to store user input
+        char url_buffer[256];
 
+        if(choice > 0 && choice < 3) {
+            //timer
+            int timer = 0;
+            //printf((const char *) choice);
+            if (choice == 2) {
+                printf("\nzadaj za aky cas v minutach ma stahovanie zacat:\n");
+                scanf("%d", &timer);
+                fflush(stdin);
+            }
+
+            //čistenie terminálu
             int c;
             while ((c = getchar()) != '\n' && c != EOF);
 
-            state = downloadManager(choice);
+            // Prompt the user for the URL
+            printf("Enter the URL: ");
+            if (fgets(url_buffer, sizeof(url_buffer), stdin) == NULL) {
+                fprintf(stderr, "Error reading input\n");
+                return 1;
+            }
+
+            // Remove newline character from the end of the URL
+            size_t len = strlen(url_buffer);
+            if (len > 0 && url_buffer[len - 1] == '\n') {
+                url_buffer[len - 1] = '\0';
+            }
+
+            // URL of the file to download
+            const char *url = url_buffer;
+
+            // Download the file
+            if (download_file(url, timer) != 0) {
+                fprintf(stderr, "Error downloading file\n");
+                return 1;
+            }
+        }
+
+        if(choice == 3){
+            FILE *file;
+            const char *filename = "downFolderPath.txt";
+            char userInput[1000]; // Assuming a maximum of 999 characters for a single line
+
+            // Open the file in write mode ("w")
+            file = fopen(filename, "w");
+
+            // Check if the file was opened successfully
+            if (file == NULL) {
+                perror("Error opening file");
+                return 1; // Exit with an error code
+            }
+
+            // Get user input
+            printf("Enter a directory where manager should be downloading:\n");
+            fgets(userInput, sizeof(userInput), stdin);
+
+            // Clear the input buffer (discard remaining characters in the buffer)
+            int c;
+            while ((c = getchar()) != '\n' && c != EOF);
+
+            // Write user input to the file
+            fprintf(file, "%s", userInput);
+
+            // Close the file
+            fclose(file);
+
+        }
+
+        //TOTO CISTI INPUT BUFFER!!! BEZ TOHTO SA ZADRHAVA NACITANIE! POUZIVAT ZA KAZDYM NACITANIM Z KLAVESNICE!!!
+//    int c;
+//    while ((c = getchar()) != '\n' && c != EOF);
+
+        //return 0;
+
         }
         prvy = false;
     }
