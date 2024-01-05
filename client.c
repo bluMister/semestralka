@@ -6,8 +6,17 @@
 #include <netdb.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
+#include <pthread.h>
+#include <unistd.h>
 
 #define BUFFER_SIZE 1024
+#define MAX_VLAKIEN 100
+
+// Struktúra pre uchovanie informácií o vlákne
+typedef struct {
+    pthread_t id;
+    int cas;
+} VlaknoInfo;
 
 // Function to extract hostname and path from the URL
 int parse_url(const char *url, char *hostname, char *path, int *is_https) {
