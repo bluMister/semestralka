@@ -33,6 +33,8 @@ void logger(char *log, bool write) {
         // Format the date and time
         strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", current_time);
 
+        strcat(buffer, log);
+
         // Open a file for writing
         FILE *file = fopen("downHistory.txt", "w");
 
@@ -41,12 +43,12 @@ void logger(char *log, bool write) {
         }
 
         // Write the formatted date and time to the file
-        fprintf(file, "%s\n", buffer + *log);
+        fprintf(file, "%s\n", buffer);
 
         // Close the file
         fclose(file);
     } else {
-        FILE *file = fopen("output.txt", "r");
+        FILE *file = fopen("downHistory.txt", "r");
 
         if (file == NULL) {
             printf("Error opening file for reading!\n");
@@ -101,6 +103,7 @@ char *loadDownFolderPath() {
     content[size] = '\0'; // Null-terminate the string
 
     fclose(file);
+    content[strcspn(content, "\n")] = 0;
     return content;
 }
 
@@ -200,9 +203,15 @@ int download_file(const char *url, int timer) {
     // Open the output file with the extracted filename
     const char *filename = extract_filename(url);
     const char *downPath = loadDownFolderPath();
-    char *finalPath = (char *) malloc(strlen(downPath) + strlen(filename) + 2);
-    printf("%s", &"downloading as: "[*finalPath]);
-    logger(*finalPath, true);
+
+    printf("%s\n", filename);
+    printf("%s\n", downPath);
+
+    char finalPath[1024];
+    strcpy(finalPath,downPath);
+    strcat(finalPath,filename);
+    printf("%s\n", finalPath);
+    logger(finalPath, true);
     FILE *file = fopen(finalPath, "wb");
     if (file == NULL) {
         perror("Error opening output file");
