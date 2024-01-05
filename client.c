@@ -127,44 +127,34 @@ SSL_CTX *create_ssl_context() {
 // Funkcia, ktorá bude vykonávaná vo vlákne
 void *vlaknoFunkcia(void *arg) {
     VlaknoInfo *info = (VlaknoInfo *) arg;
-    printf("Vlákno s číslom %lu spustené. Spánok na %d sekúnd. URL: %s\n", info->id, info->timer, info->url);
+    //printf("Vlákno s číslom %lu spustené. Spánok na %d sekúnd. URL: %s\n", info->id, info->timer, info->url);
 
-    // Spánok na daný čas (v sekundách)
-    sleep(info->timer);
-
-    // ... vykonávajte ďalšie činnosti vo vlákne ...
-    printf("Vlákno s číslom %lu sa vykonalo. URL: %s\n", info->id, info->url);
-    pthread_exit(NULL);
-}
-
-// Function to download a file from an HTTP or HTTPS server
-int download_file(const char *url, int timer) {
     char hostname[256];
     char path[256];
     int is_https;
 
     // Parse URL to extract hostname and path
-    if (parse_url(url, hostname, path, &is_https) != 0) {
-        return 1;
+    if (parse_url(info->url, hostname, path, &is_https) != 0) {
+        //return 1;
     }
 
     //check for timer and wiat if necessary
-    if (timer > 0) {
-        sleep(timer * 60);
+    if (info->timer > 0) {
+        sleep(info->timer * 60);
     }
 
     // Resolve hostname to IP address
     struct hostent *server = gethostbyname(hostname);
     if (server == NULL) {
         perror("Error resolving hostname");
-        return 1;
+        //return 1;
     }
 
     // Create a socket
     int sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd == -1) {
         perror("Error creating socket");
-        return 1;
+        //return 1;
     }
 
     // Set up server address structure
@@ -177,7 +167,7 @@ int download_file(const char *url, int timer) {
     if (connect(sockfd, (struct sockaddr *) &server_addr, sizeof(server_addr)) == -1) {
         perror("Error connecting to server");
         close(sockfd);
-        return 1;
+        //return 1;
     }
 
     // If using HTTPS, set up SSL
@@ -188,7 +178,7 @@ int download_file(const char *url, int timer) {
         ssl_ctx = create_ssl_context();
         if (!ssl_ctx) {
             close(sockfd);
-            return 1;
+            //return 1;
         }
 
         ssl = SSL_new(ssl_ctx);
@@ -199,7 +189,7 @@ int download_file(const char *url, int timer) {
             SSL_free(ssl);
             SSL_CTX_free(ssl_ctx);
             close(sockfd);
-            return 1;
+            //return 1;
         }
     }
 
@@ -215,7 +205,7 @@ int download_file(const char *url, int timer) {
     }
 
     // Open the output file with the extracted filename
-    const char *filename = extract_filename(url);
+    const char *filename = extract_filename(info->url);
     const char *downPath = loadDownFolderPath();
 
     printf("%s\n", filename);
@@ -234,7 +224,7 @@ int download_file(const char *url, int timer) {
             SSL_CTX_free(ssl_ctx);
         }
         close(sockfd);
-        return 1;
+        //return 1;
     }
 
     // Receive and save the file data
@@ -264,6 +254,10 @@ int download_file(const char *url, int timer) {
     close(sockfd);
 
     printf("Download complete. File saved as %s\n", filename);
+
+    // ... vykonávajte ďalšie činnosti vo vlákne ...
+    //printf("Vlákno s číslom %lu sa vykonalo. URL: %s\n", info->id, info->url);
+    pthread_exit(NULL);
 
     return 0;
 }
@@ -388,7 +382,6 @@ int main() {
                 }
             }
             prvy = false;
-
 
 
         }
