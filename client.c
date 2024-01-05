@@ -8,6 +8,7 @@
 #include <openssl/err.h>
 #include <pthread.h>
 #include <unistd.h>
+#include <stdbool.h>
 
 #define BUFFER_SIZE 1024
 #define MAX_VLAKIEN 100
@@ -206,6 +207,7 @@ int downloadManager(int choice){
     if(choice > 0 && choice < 3) {
         //timer
         int timer = 0;
+        //printf((const char *) choice);
         if (choice == 2) {
             printf("\nzadaj za aky cas v minutach ma stahovanie zacat:\n");
             scanf("%d", &timer);
@@ -267,20 +269,24 @@ int downloadManager(int choice){
     }
 
     //TOTO CISTI INPUT BUFFER!!! BEZ TOHTO SA ZADRHAVA NACITANIE! POUZIVAT ZA KAZDYM NACITANIM Z KLAVESNICE!!!
-    int c;
-    while ((c = getchar()) != '\n' && c != EOF);
+//    int c;
+//    while ((c = getchar()) != '\n' && c != EOF);
 
-    return 0;
+    //return 0;
 
 }
 
 int main() {
-
+    bool prvy = true;
     int choice = 0;
     int state;
     while (choice != 5) {
         //ui
-        printf("\nwelcome to POS Download Manager! \n choose the action:\n");
+        if (prvy) {
+            printf("\nWelcome to POS Download Manager! \n Choose the action:\n");
+        } else {
+            printf("Choose the next action:\n");
+        }
         printf("1 - download file\n");
         printf("2 - schedule download for later\n");
         printf("3 - manage download directory\n");
@@ -298,6 +304,7 @@ int main() {
 
             state = downloadManager(choice);
         }
+        prvy = false;
     }
     return state;
 }
