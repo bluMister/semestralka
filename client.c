@@ -31,7 +31,7 @@ void logger(char *log, bool write) {
         current_time = localtime(&t);
 
         // Format the date and time
-        strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", current_time);
+        strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S ", current_time);
 
         strcat(buffer, log);
 
