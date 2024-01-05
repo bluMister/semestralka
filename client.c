@@ -13,10 +13,11 @@
 #define BUFFER_SIZE 1024
 #define MAX_VLAKIEN 100
 
-// Struktúra pre uchovanie informácií o vlákne
+// Štruktúra pre uchovanie informácií o vlákne
 typedef struct {
     pthread_t id;
-    int cas;
+    int timer;
+    const char *url;
 } VlaknoInfo;
 
 //download logger
@@ -121,6 +122,19 @@ SSL_CTX *create_ssl_context() {
         return NULL;
     }
     return ctx;
+}
+
+// Funkcia, ktorá bude vykonávaná vo vlákne
+void *vlaknoFunkcia(void *arg) {
+    VlaknoInfo *info = (VlaknoInfo *)arg;
+    printf("Vlákno s číslom %lu spustené. Spánok na %d sekúnd. URL: %s\n", info->id, info->timer, info->url);
+
+    // Spánok na daný čas (v sekundách)
+    sleep(info->timer);
+
+    // ... vykonávajte ďalšie činnosti vo vlákne ...
+    printf("Vlákno s číslom %lu sa vykonalo. URL: %s\n", info->id, info->url);
+    pthread_exit(NULL);
 }
 
 // Function to download a file from an HTTP or HTTPS server

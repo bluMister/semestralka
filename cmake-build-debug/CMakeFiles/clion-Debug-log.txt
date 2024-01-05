@@ -1,17 +1,4 @@
-/usr/bin/cmake -DCMAKE_BUILD_TYPE=Debug -G "CodeBlocks - Unix Makefiles" -S /tmp/tmp.c4JwXTXy8h -B /tmp/tmp.c4JwXTXy8h/cmake-build-debug
--- Configuring incomplete, errors occurred!
-See also "/tmp/tmp.c4JwXTXy8h/cmake-build-debug/CMakeFiles/CMakeOutput.log".
-CMake Error at CMakeLists.txt:7 (add_executable):
-  add_executable cannot create target "semestralka" because another target
-  with the same name already exists.  The existing target is an executable
-  created in source directory "/tmp/tmp.c4JwXTXy8h".  See documentation for
-  policy CMP0002 for more details.
-
-
-CMake Error at CMakeLists.txt:8 (add_executable):
-  add_executable cannot create target "semestralka" because another target
-  with the same name already exists.  The existing target is an executable
-  created in source directory "/tmp/tmp.c4JwXTXy8h".  See documentation for
-  policy CMP0002 for more details.
-
-
+/usr/bin/cmake -DCMAKE_BUILD_TYPE=Debug -G "CodeBlocks - Unix Makefiles" -S /tmp/tmp.LRugvZZsuP -B /tmp/tmp.LRugvZZsuP/cmake-build-debug
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /tmp/tmp.LRugvZZsuP/cmake-build-debug
