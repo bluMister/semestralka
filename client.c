@@ -36,7 +36,7 @@ int parse_url(const char *url, char *hostname, char *path, int *is_https) {
 char *loadDownFolderPath() {
     FILE *file = fopen("downFolderPath.txt", "r");
     if (file == NULL) {
-        perror("Error opening file");
+        perror("Error opening path file");
         exit(EXIT_FAILURE);
     }
 
@@ -154,7 +154,7 @@ int download_file(const char *url, int timer) {
     const char *filename = extract_filename(url);
     const char *downPath = loadDownFolderPath();
     char *finalPath = (char *)malloc(strlen(downPath) + strlen(filename) + 2);
-    printf("downloading as: " + *finalPath);
+    printf("%s", &"downloading as: " [ *finalPath]);
     FILE *file = fopen(finalPath, "wb");
     if (file == NULL) {
         perror("Error opening output file");
@@ -209,9 +209,9 @@ int downloadManager(int choice){
         if (choice == 2) {
             printf("\nzadaj za aky cas v minutach ma stahovanie zacat:\n");
             scanf("%d", &timer);
-        }
 
-        fflush(stdin);
+            fflush(stdin);
+        }
 
         // Prompt the user for the URL
         printf("Enter the URL: ");
@@ -251,7 +251,7 @@ int downloadManager(int choice){
         }
 
         // Get user input
-        printf("Enter a line of text to write to the file:\n");
+        printf("Enter a directory where manager should be downloading:\n");
         fgets(userInput, sizeof(userInput), stdin);
 
         // Clear the input buffer (discard remaining characters in the buffer)

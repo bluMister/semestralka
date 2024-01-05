@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="RemoteTargetsManager">
+    <option name="projectDefaultTargetUuid" value="19e0ef2b-0645-4b9f-96d6-9c573b90fd2d" />
+    <targets>
+      <target name="strmy@frios2.fri.uniza.sk:10022" type="ssh/sftp" uuid="19e0ef2b-0645-4b9f-96d6-9c573b90fd2d">
+        <config>
+          <option name="projectRootOnTarget" value="/home/strmy/semestralkaPOS" />
+          <option name="serverName" value="strmy@frios2.fri.uniza.sk:10022 password" />
+        </config>
+      </target>
+    </targets>
+  </component>
+</project>
