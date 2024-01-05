@@ -276,22 +276,28 @@ int downloadManager(int choice){
 
 int main() {
 
-    //ui
-    printf("\nwelcome to POS Download Manager! \n choose the action:\n");
-    printf("1 - download file\n");
-    printf("2 - schedule download for later\n");
-    printf("3 - manage download directory\n");
-    printf("4 - view download history\n");
-    printf("5 - exit :(\n");
-
     int choice = 0;
-    scanf("%d", &choice);
-    fflush(stdin);
+    int state;
+    while (choice != 5) {
+        //ui
+        printf("\nwelcome to POS Download Manager! \n choose the action:\n");
+        printf("1 - download file\n");
+        printf("2 - schedule download for later\n");
+        printf("3 - manage download directory\n");
+        printf("4 - view download history\n");
+        printf("5 - exit :(\n");
 
-    int c;
-    while ((c = getchar()) != '\n' && c != EOF);
+        scanf("%d", &choice);
 
-    int state = downloadManager(choice);
+        //exit
+        if (choice != 5) {
+            fflush(stdin);
 
+            int c;
+            while ((c = getchar()) != '\n' && c != EOF);
+
+            state = downloadManager(choice);
+        }
+    }
     return state;
 }
