@@ -37,7 +37,7 @@ void logger(char *log, bool write) {
         strcat(buffer, log);
 
         // Open a file for writing
-        FILE *file = fopen("downHistory.txt", "w");
+        FILE *file = fopen("downHistory.txt", "a");
 
         if (file == NULL) {
             printf("Error opening file!\n");
@@ -84,28 +84,47 @@ int parse_url(const char *url, char *hostname, char *path, int *is_https) {
 
 //function to read download folder path from file
 char *loadDownFolderPath() {
+
     FILE *file = fopen("downFolderPath.txt", "r");
+
+    // Check if the file was opened successfully
     if (file == NULL) {
-        perror("Error opening path file");
-        exit(EXIT_FAILURE);
+        fprintf(stderr, "Error opening file\n");
+        return NULL;
     }
 
+    // Determine the size of the file
     fseek(file, 0, SEEK_END);
-    long size = ftell(file);
-    fseek(file, 0, SEEK_SET);
+    long file_size = ftell(file);
+    rewind(file);
 
-    char *content = (char *) malloc(size + 1);
-    if (content == NULL) {
-        perror("Error allocating memory");
-        exit(EXIT_FAILURE);
+    // Allocate memory to store the file content
+    char *file_content = (char *)malloc(file_size + 1);
+
+    // Check if memory allocation was successful
+    if (file_content == NULL) {
+        fprintf(stderr, "Memory allocation error\n");
+        fclose(file);
+        return NULL;
     }
 
-    fread(content, 1, size, file);
-    content[size] = '\0'; // Null-terminate the string
+    // Read the file content into the variable
+    fread(file_content, 1, file_size, file);
 
+    // Close the file
     fclose(file);
-    content[strcspn(content, "\n")] = 0;
-    return content;
+
+    // Null-terminate the content to treat it as a string
+    file_content[file_size] = '\0';
+
+    // Remove line breaks from the content
+    for (int i = 0; i < file_size; i++) {
+        if (file_content[i] == '\n' || file_content[i] == '\r') {
+            file_content[i] = ' ';
+        }
+    }
+
+    return file_content;
 }
 
 // Function to extract filename from the URL
@@ -349,32 +368,34 @@ int main() {
 
             //------------------------------------------------3333333----------------------------------------------
             if (choice == 3) {
-                FILE *file;
-                const char *filename = "downFolderPath.txt";
-                char userInput[1000]; // Assuming a maximum of 999 characters for a single line
 
-                // Open the file in write mode ("w")
-                file = fopen(filename, "w");
+                char *current_content = loadDownFolderPath();
+                if (current_content != NULL) {
+                    printf("Current content of the file:\n%s\n", current_content);
+                    free(current_content);  // Free the allocated memory
+                }
+
+                FILE *file = fopen("downFolderPath.txt", "a");
 
                 // Check if the file was opened successfully
                 if (file == NULL) {
-                    perror("Error opening file");
-                    return 1; // Exit with an error code
+                    fprintf(stderr, "Error opening file for writing\n");
                 }
 
-                // Get user input
-                printf("Enter a directory where manager should be downloading:\n");
-                fgets(userInput, sizeof(userInput), stdin);
+                // Prompt the user for input
+                printf("Enter text (Enter to end input):\n");
+
+                // Read input from the keyboard and write it to the file
+                char buffer[256];
+                while (fgets(buffer, sizeof(buffer), stdin) != NULL && buffer[0] != '\n') {
+                    fputs(buffer, file);
+                }
+                // Close the file
+                fclose(file);
 
                 // Clear the input buffer (discard remaining characters in the buffer)
                 int c;
                 while ((c = getchar()) != '\n' && c != EOF);
-
-                // Write user input to the file
-                fprintf(file, "%s", userInput);
-
-                // Close the file
-                fclose(file);
 
             }
 
