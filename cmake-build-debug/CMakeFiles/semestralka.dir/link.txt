@@ -1,1 +1,1 @@
-/usr/bin/cc -g CMakeFiles/semestralka.dir/main.c.o -o semestralka  -lpthread 
+/usr/bin/cc -g CMakeFiles/semestralka.dir/main.c.o -o semestralka  -pthread 

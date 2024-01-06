@@ -53,18 +53,18 @@ void logger(char *filename, char *log, bool write) {
 
         if (file == NULL) {
             printf("Error opening file for reading!\n");
+        } else {
+            // Read and display the contents of the file with the filename
+            printf("Contents of '%s':\n", filename);
+
+            char line[100];
+            while (fgets(line, sizeof(line), file) != NULL) {
+                printf("%s", line);
+            }
+
+            // Close the file
+            fclose(file);
         }
-
-        // Read and display the contents of the file
-        printf("Contents of 'output.txt':\n");
-
-        char line[100];
-        while (fgets(line, sizeof(line), file) != NULL) {
-            printf("%s", line);
-        }
-
-        // Close the file
-        fclose(file);
     }
 }
 
@@ -118,7 +118,7 @@ char *loadDownFolderPath(char *filename, char *log, bool write) {
         }
 
         // Read and display the contents of the file
-        printf("Contents of 'output.txt':\n");
+        printf("Contents of '%s':\n", filename);
 
         char line[100];
         while (fgets(line, sizeof(line), file) != NULL) {
@@ -311,6 +311,8 @@ int main() {
             printf("5 - exit :(\n");
 
             scanf("%d", &choice);
+            //Čistenie terminálu
+            while (getchar() != '\n');
 
             // Buffer to store user input
             char url_buffer[256];
@@ -322,11 +324,9 @@ int main() {
                 if (choice == 2) {
                     printf("\nZadaj za aky cas v minutach ma stahovanie zacat:\n");
                     scanf("%d", &timer);
-                    fflush(stdin);
+                    //Čistenie terminálu
+                    while (getchar() != '\n');
                 }
-
-                //Čistenie terminálu
-                while (getchar() != '\n');
 
                 // Prompt the user for the URL
                 printf("Zadajte URL: ");
@@ -344,11 +344,6 @@ int main() {
                 // URL of the file to download
                 const char *url = url_buffer;
 
-                // Download the file
-//                    if (download_file(url, timer) != 0) {
-//                        fprintf(stderr, "Error downloading file\n");
-//                        return 1;
-//                    }
                 // Download the file
                 int index = 0;
                 while (vlakna[index].id != 0 && index < MAX_VLAKIEN) {
@@ -368,6 +363,7 @@ int main() {
                 } else {
                     printf("Vektor vlákien je plný, nie je možné pridať ďalšie vlákno.\n");
                 }
+
             }
             if(pocetVlakien > MAX_VLAKIEN){
                 printf("Dosiahnuty maximalny pocet stahovanych suborov! \npockajte kým sa nejaký subor stiahne\n");
@@ -375,9 +371,6 @@ int main() {
 
             //------------------------------------------------3333333----------------------------------------------
             if (choice == 3) {
-
-                int c;
-                while ((c = getchar()) != '\n' && c != EOF) { }
 
                 char input[256]; // Assuming a fixed-size buffer for input
 
@@ -400,8 +393,6 @@ int main() {
                 loadDownFolderPath("downFolderPath.txt", input, true);
                 loadDownFolderPath("downFolderPath.txt", NULL, false);
 
-                int b;
-                while ((b = getchar()) != '\n' && b != EOF) { }
 
             }
 
@@ -415,7 +406,7 @@ int main() {
 
     }
 
-    printf("program konci! cakanie na ukoncenie vlaken");
+    printf("Program konci! Cakanie na ukoncenie vlaken");
     // Čakanie na ukončenie vlákien
     for (int i = 0; i < pocetVlakien; ++i) {
         if (pthread_join(vlakna[i].id, NULL) != 0) {
