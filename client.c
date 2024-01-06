@@ -266,127 +266,129 @@ int main() {
     VlaknoInfo vlakna[MAX_VLAKIEN];
     int pocetVlakien = 0;
 
-    // Pridávanie vlákien do vektora
-    while (pocetVlakien < MAX_VLAKIEN) {
 
-        bool prvy = true; //pre iny vypis na zaciaku a potom v procese behu programu
-        int choice = 0;
-        while (choice != 5) {
-            if (choice != 5) {
+    bool prvy = true; //pre iny vypis na zaciaku a potom v procese behu programu
+    int choice = 0;
+    while (choice != 5) {
+        if (choice != 5) {
 
-                //download manazer
-                if (prvy) {
-                    printf("\nWelcome to POS Download Manager! \n Choose the action:\n");
-                } else {
-                    printf("Choose the next action:\n");
+            //download manazer
+            if (prvy) {
+                printf("\nWelcome to POS Download Manager! \n Choose the action:\n");
+            } else {
+                printf("Choose the next action:\n");
+            }
+            printf("1 - download file\n");
+            printf("2 - schedule download for later\n");
+            printf("3 - manage download directory\n");
+            printf("4 - view download history\n");
+            printf("5 - exit :(\n");
+
+            scanf("%d", &choice);
+
+            // Buffer to store user input
+            char url_buffer[256];
+
+            if (choice > 0 && choice < 3 && pocetVlakien <= MAX_VLAKIEN) {
+
+                int timer = 0;
+                //printf((const char *) choice);
+                if (choice == 2) {
+                    printf("\nZadaj za aky cas v minutach ma stahovanie zacat:\n");
+                    scanf("%d", &timer);
+                    fflush(stdin);
                 }
-                printf("1 - download file\n");
-                printf("2 - schedule download for later\n");
-                printf("3 - manage download directory\n");
-                printf("4 - view download history\n");
-                printf("5 - exit :(\n");
 
-                scanf("%d", &choice);
+                //Čistenie terminálu
+                while (getchar() != '\n');
 
-                // Buffer to store user input
-                char url_buffer[256];
+                // Prompt the user for the URL
+                printf("Zadajte URL: ");
+                if (fgets(url_buffer, sizeof(url_buffer), stdin) == NULL) {
+                    fprintf(stderr, "Error reading input\n");
+                    return 1;
+                }
 
-                if (choice > 0 && choice < 3) {
-                    int timer = 0;
-                    //printf((const char *) choice);
-                    if (choice == 2) {
-                        printf("\nZadaj za aky cas v minutach ma stahovanie zacat:\n");
-                        scanf("%d", &timer);
-                        fflush(stdin);
-                    }
+                // Remove newline character from the end of the URL
+                size_t len = strlen(url_buffer);
+                if (len > 0 && url_buffer[len - 1] == '\n') {
+                    url_buffer[len - 1] = '\0';
+                }
 
-                    //Čistenie terminálu
-                    while (getchar() != '\n');
+                // URL of the file to download
+                const char *url = url_buffer;
 
-                    // Prompt the user for the URL
-                    printf("Zadajte URL: ");
-                    if (fgets(url_buffer, sizeof(url_buffer), stdin) == NULL) {
-                        fprintf(stderr, "Error reading input\n");
-                        return 1;
-                    }
-
-                    // Remove newline character from the end of the URL
-                    size_t len = strlen(url_buffer);
-                    if (len > 0 && url_buffer[len - 1] == '\n') {
-                        url_buffer[len - 1] = '\0';
-                    }
-
-                    // URL of the file to download
-                    const char *url = url_buffer;
-
-                    // Download the file
+                // Download the file
 //                    if (download_file(url, timer) != 0) {
 //                        fprintf(stderr, "Error downloading file\n");
 //                        return 1;
 //                    }
-                    // Download the file
-                    int index = 0;
-                    while (vlakna[index].id != 0 && index < MAX_VLAKIEN) {
-                        index++;
-                    }
-
-                    if (index < MAX_VLAKIEN) {
-                        vlakna[index].timer = timer;
-                        vlakna[index].url = strdup(url);
-
-                        if (pthread_create(&vlakna[index].id, NULL, vlaknoFunkcia, &vlakna[index]) != 0) {
-                            fprintf(stderr, "Chyba pri vytváraní vlákna.\n");
-                            return 1;
-                        }
-
-                        pocetVlakien++;
-                    } else {
-                        printf("Vektor vlákien je plný, nie je možné pridať ďalšie vlákno.\n");
-                    }
+                // Download the file
+                int index = 0;
+                while (vlakna[index].id != 0 && index < MAX_VLAKIEN) {
+                    index++;
                 }
 
-                //------------------------------------------------3333333----------------------------------------------
-                if (choice == 3) {
-                    FILE *file;
-                    const char *filename = "downFolderPath.txt";
-                    char userInput[1000]; // Assuming a maximum of 999 characters for a single line
+                if (index < MAX_VLAKIEN) {
+                    vlakna[index].timer = timer;
+                    vlakna[index].url = strdup(url);
 
-                    // Open the file in write mode ("w")
-                    file = fopen(filename, "w");
-
-                    // Check if the file was opened successfully
-                    if (file == NULL) {
-                        perror("Error opening file");
-                        return 1; // Exit with an error code
+                    if (pthread_create(&vlakna[index].id, NULL, vlaknoFunkcia, &vlakna[index]) != 0) {
+                        fprintf(stderr, "Chyba pri vytváraní vlákna.\n");
+                        return 1;
                     }
 
-                    // Get user input
-                    printf("Enter a directory where manager should be downloading:\n");
-                    fgets(userInput, sizeof(userInput), stdin);
-
-                    // Clear the input buffer (discard remaining characters in the buffer)
-                    int c;
-                    while ((c = getchar()) != '\n' && c != EOF);
-
-                    // Write user input to the file
-                    fprintf(file, "%s", userInput);
-
-                    // Close the file
-                    fclose(file);
-
-                }
-
-                //------------------------------------------------44444444------------------------------------------------
-                if (choice == 4) {
-                    logger(NULL, false);
+                    pocetVlakien++;
+                } else {
+                    printf("Vektor vlákien je plný, nie je možné pridať ďalšie vlákno.\n");
                 }
             }
-            prvy = false;
+            if(pocetVlakien > MAX_VLAKIEN){
+                printf("Dosiahnuty maximalny pocet stahovanych suborov! \npockajte kým sa nejaký subor stiahne\n");
+            }
 
+            //------------------------------------------------3333333----------------------------------------------
+            if (choice == 3) {
+                FILE *file;
+                const char *filename = "downFolderPath.txt";
+                char userInput[1000]; // Assuming a maximum of 999 characters for a single line
 
+                // Open the file in write mode ("w")
+                file = fopen(filename, "w");
+
+                // Check if the file was opened successfully
+                if (file == NULL) {
+                    perror("Error opening file");
+                    return 1; // Exit with an error code
+                }
+
+                // Get user input
+                printf("Enter a directory where manager should be downloading:\n");
+                fgets(userInput, sizeof(userInput), stdin);
+
+                // Clear the input buffer (discard remaining characters in the buffer)
+                int c;
+                while ((c = getchar()) != '\n' && c != EOF);
+
+                // Write user input to the file
+                fprintf(file, "%s", userInput);
+
+                // Close the file
+                fclose(file);
+
+            }
+
+            //------------------------------------------------44444444------------------------------------------------
+            if (choice == 4) {
+                logger(NULL, false);
+            }
         }
+        prvy = false;
+
+
     }
 
+    printf("program konci! cakanie na ukoncenie vlaken");
     // Čakanie na ukončenie vlákien
     for (int i = 0; i < pocetVlakien; ++i) {
         if (pthread_join(vlakna[i].id, NULL) != 0) {
