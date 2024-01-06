@@ -21,7 +21,7 @@ typedef struct {
 } VlaknoInfo;
 
 //download logger
-void logger(char *log, bool write) {
+void logger(char *filename, char *log, bool write) {
 
     if (write) {
         time_t t;
@@ -37,7 +37,7 @@ void logger(char *log, bool write) {
         strcat(buffer, log);
 
         // Open a file for writing
-        FILE *file = fopen("downHistory.txt", "a");
+        FILE *file = fopen(filename, "a");
 
         if (file == NULL) {
             printf("Error opening file!\n");
@@ -49,7 +49,7 @@ void logger(char *log, bool write) {
         // Close the file
         fclose(file);
     } else {
-        FILE *file = fopen("downHistory.txt", "r");
+        FILE *file = fopen(filename, "r");
 
         if (file == NULL) {
             printf("Error opening file for reading!\n");
@@ -83,48 +83,55 @@ int parse_url(const char *url, char *hostname, char *path, int *is_https) {
 }
 
 //function to read download folder path from file
-char *loadDownFolderPath() {
+char *loadDownFolderPath(char *filename, char *log, bool write) {
 
-    FILE *file = fopen("downFolderPath.txt", "r");
+    if (write) {
+        time_t t;
+        struct tm *current_time;
+        char buffer[100];
 
-    // Check if the file was opened successfully
-    if (file == NULL) {
-        fprintf(stderr, "Error opening file\n");
-        return NULL;
-    }
+        time(&t);
+        current_time = localtime(&t);
 
-    // Determine the size of the file
-    fseek(file, 0, SEEK_END);
-    long file_size = ftell(file);
-    rewind(file);
+        // Open a file for writing
+        FILE *file = fopen(filename, "w");
 
-    // Allocate memory to store the file content
-    char *file_content = (char *)malloc(file_size + 1);
-
-    // Check if memory allocation was successful
-    if (file_content == NULL) {
-        fprintf(stderr, "Memory allocation error\n");
-        fclose(file);
-        return NULL;
-    }
-
-    // Read the file content into the variable
-    fread(file_content, 1, file_size, file);
-
-    // Close the file
-    fclose(file);
-
-    // Null-terminate the content to treat it as a string
-    file_content[file_size] = '\0';
-
-    // Remove line breaks from the content
-    for (int i = 0; i < file_size; i++) {
-        if (file_content[i] == '\n' || file_content[i] == '\r') {
-            file_content[i] = ' ';
+        if (file == NULL) {
+            printf("Error opening file!\n");
         }
+
+        strcat(buffer, log);
+
+        // Write the formatted date and time to the file
+        fprintf(file, "%s\n", buffer);
+
+        // Close the file
+        fclose(file);
+        char *rt = buffer;
+        return rt;
+
+    } else {
+        FILE *file = fopen(filename, "r");
+
+        if (file == NULL) {
+            printf("Error opening file for reading!\n");
+        }
+
+        // Read and display the contents of the file
+        printf("Contents of 'output.txt':\n");
+
+        char line[100];
+        while (fgets(line, sizeof(line), file) != NULL) {
+            printf("%s", line);
+        }
+
+        // Close the file
+        fclose(file);
+
+        char *rt = line;
+        return rt;
     }
 
-    return file_content;
 }
 
 // Function to extract filename from the URL
@@ -225,7 +232,7 @@ void *vlaknoFunkcia(void *arg) {
 
     // Open the output file with the extracted filename
     const char *filename = extract_filename(info->url);
-    const char *downPath = loadDownFolderPath();
+    const char *downPath = loadDownFolderPath("downFolderPath.txt", NULL, false);
 
     printf("%s\n", filename);
     printf("%s\n", downPath);
@@ -234,7 +241,7 @@ void *vlaknoFunkcia(void *arg) {
     strcpy(finalPath, downPath);
     strcat(finalPath, filename);
     printf("%s\n", finalPath);
-    logger(finalPath, true);
+    logger( "downHistory.txt",finalPath, true);
     FILE *file = fopen(finalPath, "wb");
     if (file == NULL) {
         perror("Error opening output file");
@@ -369,39 +376,38 @@ int main() {
             //------------------------------------------------3333333----------------------------------------------
             if (choice == 3) {
 
-                char *current_content = loadDownFolderPath();
-                if (current_content != NULL) {
-                    printf("Current content of the file:\n%s\n", current_content);
-                    free(current_content);  // Free the allocated memory
-                }
-
-                FILE *file = fopen("downFolderPath.txt", "a");
-
-                // Check if the file was opened successfully
-                if (file == NULL) {
-                    fprintf(stderr, "Error opening file for writing\n");
-                }
-
-                // Prompt the user for input
-                printf("Enter text (Enter to end input):\n");
-
-                // Read input from the keyboard and write it to the file
-                char buffer[256];
-                while (fgets(buffer, sizeof(buffer), stdin) != NULL && buffer[0] != '\n') {
-                    fputs(buffer, file);
-                }
-                // Close the file
-                fclose(file);
-
-                // Clear the input buffer (discard remaining characters in the buffer)
                 int c;
-                while ((c = getchar()) != '\n' && c != EOF);
+                while ((c = getchar()) != '\n' && c != EOF) { }
+
+                char input[256]; // Assuming a fixed-size buffer for input
+
+                printf("Enter text: ");
+
+                if (fgets(input, sizeof(input), stdin) != NULL) {
+                    // Remove the newline character at the end, if it exists
+                    char *newline = strchr(input, '\n');
+                    if (newline != NULL) {
+                        *newline = '\0';
+                    }
+
+                    // Now, 'input' contains the text entered from the keyboard
+                    printf("You entered: %s\n", input);
+                } else {
+                    fprintf(stderr, "Error reading input\n");
+                    return 1;
+                }
+
+                loadDownFolderPath("downFolderPath.txt", input, true);
+                loadDownFolderPath("downFolderPath.txt", NULL, false);
+
+                int b;
+                while ((b = getchar()) != '\n' && b != EOF) { }
 
             }
 
             //------------------------------------------------44444444------------------------------------------------
             if (choice == 4) {
-                logger(NULL, false);
+                logger("downHistory.txt", NULL, false);
             }
         }
         prvy = false;
