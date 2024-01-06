@@ -237,7 +237,7 @@ void *vlaknoFunkcia(void *arg) {
     const char *filename = extract_filename(info->url);
     const char *downPath = loadDownFolderPath("downFolderPath.txt", NULL, false, false);
 
-//    printf("%s\n", filename);
+      printf("Sťahovanie súboru %s sa začalo.\n", filename);
 //    printf("%s\n", downPath);
 
     char finalPath[1024];
@@ -325,7 +325,7 @@ int main() {
                 int timer = 0;
                 //printf((const char *) choice);
                 if (choice == 2) {
-                    printf("\nZadaj za aky cas v minutach ma stahovanie zacat:\n");
+                    printf("Zadaj za aky cas v minutach ma stahovanie zacat: ");
                     scanf("%d", &timer);
                     //Čistenie terminálu
                     while (getchar() != '\n');
