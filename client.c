@@ -7,7 +7,6 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #include <pthread.h>
-#include <unistd.h>
 #include <stdbool.h>
 
 #define BUFFER_SIZE 1024
@@ -241,7 +240,7 @@ void *vlaknoFunkcia(void *arg) {
     strcpy(finalPath, downPath);
     strcat(finalPath, filename);
     printf("%s\n", finalPath);
-    logger( "downHistory.txt",finalPath, true);
+    logger("downHistory.txt", finalPath, true);
     FILE *file = fopen(finalPath, "wb");
     if (file == NULL) {
         perror("Error opening output file");
@@ -356,6 +355,7 @@ int main() {
 
                     if (pthread_create(&vlakna[index].id, NULL, vlaknoFunkcia, &vlakna[index]) != 0) {
                         fprintf(stderr, "Chyba pri vytváraní vlákna.\n");
+                        free((void *)vlakna[index].url);
                         return 1;
                     }
 
@@ -365,7 +365,7 @@ int main() {
                 }
 
             }
-            if(pocetVlakien > MAX_VLAKIEN){
+            if (pocetVlakien > MAX_VLAKIEN) {
                 printf("Dosiahnuty maximalny pocet stahovanych suborov! \npockajte kým sa nejaký subor stiahne\n");
             }
 
@@ -411,13 +411,9 @@ int main() {
     for (int i = 0; i < pocetVlakien; ++i) {
         if (pthread_join(vlakna[i].id, NULL) != 0) {
             fprintf(stderr, "Chyba pri čakaní na vlákno.\n");
+            free((void *)vlakna[i].url);
             return 1;
         }
-
-        printf("Vlákno s číslom %d ukončené na konci. URL: %s\n", vlakna[i].timer, vlakna[i].url);
-
-        // Uvoľnenie pamäte pre URL
-        free((void *) vlakna[i].url);
     }
 
     return 0;
