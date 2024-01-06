@@ -82,7 +82,7 @@ int parse_url(const char *url, char *hostname, char *path, int *is_https) {
 }
 
 //function to read download folder path from file
-char *loadDownFolderPath(char *filename, char *log, bool write) {
+char *loadDownFolderPath(char *filename, char *log, bool write, bool vypis) {
 
     if (write) {
         time_t t;
@@ -117,11 +117,15 @@ char *loadDownFolderPath(char *filename, char *log, bool write) {
         }
 
         // Read and display the contents of the file
-        printf("Contents of '%s':\n", filename);
+        if (vypis) {
+            printf("Contents of '%s':\n", filename);
+        }
 
         char line[100];
         while (fgets(line, sizeof(line), file) != NULL) {
-            printf("%s", line);
+            if (vypis) {
+                printf("%s", line);
+            }
         }
 
         // Close the file
@@ -231,15 +235,15 @@ void *vlaknoFunkcia(void *arg) {
 
     // Open the output file with the extracted filename
     const char *filename = extract_filename(info->url);
-    const char *downPath = loadDownFolderPath("downFolderPath.txt", NULL, false);
+    const char *downPath = loadDownFolderPath("downFolderPath.txt", NULL, false, false);
 
-    printf("%s\n", filename);
-    printf("%s\n", downPath);
+//    printf("%s\n", filename);
+//    printf("%s\n", downPath);
 
     char finalPath[1024];
     strcpy(finalPath, downPath);
     strcat(finalPath, filename);
-    printf("%s\n", finalPath);
+    //printf("%s\n", finalPath);
     logger("downHistory.txt", finalPath, true);
     FILE *file = fopen(finalPath, "wb");
     if (file == NULL) {
@@ -390,8 +394,8 @@ int main() {
                     return 1;
                 }
 
-                loadDownFolderPath("downFolderPath.txt", input, true);
-                loadDownFolderPath("downFolderPath.txt", NULL, false);
+                loadDownFolderPath("downFolderPath.txt", input, true, true);
+                loadDownFolderPath("downFolderPath.txt", NULL, false, true);
 
 
             }
