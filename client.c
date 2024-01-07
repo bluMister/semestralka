@@ -13,7 +13,7 @@
 #define BUFFER_SIZE 1024
 #define MAX_VLAKIEN 100
 
-// Štruktúra pre uchovanie informácií o vlákne
+// Structure for thread information
 typedef struct {
     pthread_t id;
     int timer;
@@ -40,7 +40,7 @@ void logger(char *log, bool write) {
         FILE *file = fopen("logger.txt", "a");
 
         if (file == NULL) {
-            printf("Error opening file!\n");
+            printf("Error opening log file!\n");
         }
 
         // Write the formatted date and time to the file
@@ -52,7 +52,7 @@ void logger(char *log, bool write) {
         FILE *file = fopen("logger.txt", "r");
 
         if (file == NULL) {
-            printf("Error opening file for reading!\n");
+            printf("Error opening log file for reading!\n");
         }
 
         // Read and display the contents of the file
@@ -95,7 +95,7 @@ char *downFolderPath(char *newPath, bool write) {
         FILE *file = fopen("downFolderPath.txt", "w");
 
         if (file == NULL) {
-            printf("Error opening file!\n");
+            printf("Error opening path file!\n");
         }
 
         strcpy(buffer, newPath);
@@ -112,11 +112,11 @@ char *downFolderPath(char *newPath, bool write) {
         FILE *file = fopen("downFolderPath.txt", "r");
 
         if (file == NULL) {
-            printf("Error opening file for reading!\n");
+            printf("Error opening path file for reading!\n");
         }
 
         // Read and display the contents of the file
-        printf("Current download folder: ");
+        printf("Current download folder path: ");
 
         char *line = NULL;
         size_t len = 0;
@@ -155,10 +155,9 @@ SSL_CTX *create_ssl_context() {
     return ctx;
 }
 
-// Funkcia, ktorá bude vykonávaná vo vlákne
+// Main thread function, processes the file download
 void *vlaknoFunkcia(void *arg) {
     VlaknoInfo *info = (VlaknoInfo *) arg;
-    //printf("Vlákno s číslom %lu spustené. Spánok na %d sekúnd. URL: %s\n", info->id, info->timer, info->url);
 
     char hostname[256];
     char path[256];
@@ -166,10 +165,9 @@ void *vlaknoFunkcia(void *arg) {
 
     // Parse URL to extract hostname and path
     if (parse_url(info->url, hostname, path, &is_https) != 0) {
-        //return 1;
     }
 
-    //check for timer and wiat if necessary
+    //check for timer and wait if necessary
     if (info->timer > 0) {
         sleep(info->timer * 60);
     }
@@ -178,14 +176,12 @@ void *vlaknoFunkcia(void *arg) {
     struct hostent *server = gethostbyname(hostname);
     if (server == NULL) {
         perror("Error resolving hostname");
-        //return 1;
     }
 
     // Create a socket
     int sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd == -1) {
         perror("Error creating socket");
-        //return 1;
     }
 
     // Set up server address structure
@@ -198,7 +194,6 @@ void *vlaknoFunkcia(void *arg) {
     if (connect(sockfd, (struct sockaddr *) &server_addr, sizeof(server_addr)) == -1) {
         perror("Error connecting to server");
         close(sockfd);
-        //return 1;
     }
 
     // If using HTTPS, set up SSL
@@ -209,7 +204,6 @@ void *vlaknoFunkcia(void *arg) {
         ssl_ctx = create_ssl_context();
         if (!ssl_ctx) {
             close(sockfd);
-            //return 1;
         }
 
         ssl = SSL_new(ssl_ctx);
@@ -220,7 +214,6 @@ void *vlaknoFunkcia(void *arg) {
             SSL_free(ssl);
             SSL_CTX_free(ssl_ctx);
             close(sockfd);
-            //return 1;
         }
     }
 
@@ -239,23 +232,25 @@ void *vlaknoFunkcia(void *arg) {
     const char *filename = extract_filename(info->url);
     const char *downPath = downFolderPath(NULL, false);
 
-      printf("Sťahovanie súboru %s sa začalo.\n", filename);
-//    printf("%s\n", downPath);
+      printf("Downloading of %s has started!\n", filename);
 
     char finalPath[1024];
+
     strcpy(finalPath, downPath);
     strcat(finalPath, filename);
     printf("%s\n", finalPath);
+
     logger( finalPath, true);
+
     FILE *file = fopen(finalPath, "wb");
+
     if (file == NULL) {
-        perror("Error opening output file");
+        perror("Error opening local copy of file");
         if (is_https) {
             SSL_free(ssl);
             SSL_CTX_free(ssl_ctx);
         }
         close(sockfd);
-        //return 1;
     }
 
     // Receive and save the file data
@@ -286,8 +281,7 @@ void *vlaknoFunkcia(void *arg) {
 
     printf("Download complete. File saved as %s\n", finalPath);
 
-    // ... vykonávajte ďalšie činnosti vo vlákne ...
-    //printf("Vlákno s číslom %lu sa vykonalo. URL: %s\n", info->id, info->url);
+    //End of thread
     pthread_exit(NULL);
 
 }
@@ -297,12 +291,12 @@ int main() {
     int pocetVlakien = 0;
 
 
-    bool prvy = true; //pre iny vypis na zaciaku a potom v procese behu programu
+    bool prvy = true; //Welcome text only at the beginning of the program
     int choice = 0;
     while (choice != 5) {
         if (choice != 5) {
 
-            //download manazer
+            //download manager
             if (prvy) {
                 printf("\nWelcome to POS Download Manager! \n Choose the action:\n");
             } else {
@@ -315,7 +309,7 @@ int main() {
             printf("5 - exit :(\n");
 
             scanf("%d", &choice);
-            //Čistenie terminálu
+            //console clean up, catching stuck input from keyboard
             int c;
             while ((c = getchar()) != '\n' && c != EOF) { }
 
@@ -325,19 +319,19 @@ int main() {
             if (choice > 0 && choice < 3 && pocetVlakien <= MAX_VLAKIEN) {
 
                 int timer = 0;
-                //printf((const char *) choice);
+
                 if (choice == 2) {
-                    printf("Zadaj za aky cas v minutach ma stahovanie zacat: ");
+                    printf("Set time in minutes after which the downloading will begin: ");
                     scanf("%d", &timer);
-                    //Čistenie terminálu
+                    //console clean up, catching stuck input from keyboard
                     int d;
                     while ((d = getchar()) != '\n' && d != EOF) { }
                 }
 
                 // Prompt the user for the URL
-                printf("Zadajte URL: ");
+                printf("Enter URL of the file you want to download: ");
                 if (fgets(url_buffer, sizeof(url_buffer), stdin) == NULL) {
-                    fprintf(stderr, "Error reading input\n");
+                    fprintf(stderr, "Error reading the URL input\n");
                     return 1;
                 }
 
@@ -361,19 +355,19 @@ int main() {
                     vlakna[index].url = strdup(url);
 
                     if (pthread_create(&vlakna[index].id, NULL, vlaknoFunkcia, &vlakna[index]) != 0) {
-                        fprintf(stderr, "Chyba pri vytváraní vlákna.\n");
+                        fprintf(stderr, "Error with creating a download thread\n");
                         free((void *)vlakna[index].url);
                         return 1;
                     }
 
                     pocetVlakien++;
                 } else {
-                    printf("Vektor vlákien je plný, nie je možné pridať ďalšie vlákno.\n");
+                    printf("Too many files are being downloaded to start new download thread!\n");
                 }
 
             }
             if (pocetVlakien > MAX_VLAKIEN) {
-                printf("Dosiahnuty maximalny pocet stahovanych suborov! \npockajte kým sa nejaký subor stiahne\n");
+                printf("Maximum amount of download threads reached! \nWait with next download for previous ones to finish!\n");
             }
 
             //------------------------------------------------3333333----------------------------------------------
@@ -391,18 +385,17 @@ int main() {
                         *newline = '\0';
                     }
 
-                    // Now, 'input' contains the text entered from the keyboard
-                    printf("You entered: %s\n", input);
                 } else {
-                    fprintf(stderr, "Error reading input\n");
+                    fprintf(stderr, "Error reading input for download path\n");
                     return 1;
                 }
 
                 if (!directoryExists(input)) {
+                    printf("Directory of download path missing! Creating missing directory...\n");
                     // Create the directory if it doesn't exist
                     if (mkdir(input, 0777) == -1) {
                         // Check if there was an error creating the directory
-                        printf("Error creating directory.\n");
+                        printf("Error creating corresponding directory.\n");
                         exit(EXIT_FAILURE);
                     }
                     printf("Directory created successfully.\n");
@@ -422,11 +415,11 @@ int main() {
 
     }
 
-    printf("Program konci! Cakanie na ukoncenie vlaken\n");
-    // Čakanie na ukončenie vlákien
+    printf("Application is terminating! Waiting for remaining downloads to finish...\n");
+    // Waiting for threads to finish
     for (int i = 0; i < pocetVlakien; ++i) {
         if (pthread_join(vlakna[i].id, NULL) != 0) {
-            fprintf(stderr, "Chyba pri čakaní na vlákno.\n");
+            fprintf(stderr, "Error while waiting for download thread\n");
             return 1;
         }
         free((void *)vlakna[i].url);
