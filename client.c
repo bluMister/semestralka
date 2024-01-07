@@ -99,9 +99,9 @@ char *downFolderPath(char *newPath, bool write) {
             printf("Error opening file!\n");
         }
 
-        strcat(buffer, newPath);
+        strcpy(buffer, newPath);
 
-        // Write the formatted date and time to the file
+        // Write to the file
         fprintf(file, "%s\n", buffer);
 
         // Close the file
@@ -119,16 +119,23 @@ char *downFolderPath(char *newPath, bool write) {
         // Read and display the contents of the file
         printf("Current download folder: ");
 
-        char line[100];
-        while (fgets(line, sizeof(line), file) != NULL) {
+        char *line = NULL;
+        size_t len = 0;
+        ssize_t read;
+
+        while ((read = getline(&line, &len, file)) != -1) {
             printf("%s\n", line);
         }
 
         // Close the file
         fclose(file);
 
-        char *rt = line;
-        return rt;
+        // Trim the newline character from the end of the line
+        if (line != NULL && line[strlen(line) - 1] == '\n') {
+            line[strlen(line) - 1] = '\0';
+        }
+
+        return line;
     }
 
 }
@@ -311,7 +318,8 @@ int main() {
 
             scanf("%d", &choice);
             //Čistenie terminálu
-            while (getchar() != '\n');
+            int c;
+            while ((c = getchar()) != '\n' && c != EOF) { }
 
             // Buffer to store user input
             char url_buffer[256];
@@ -324,7 +332,8 @@ int main() {
                     printf("Zadaj za aky cas v minutach ma stahovanie zacat: ");
                     scanf("%d", &timer);
                     //Čistenie terminálu
-                    while (getchar() != '\n');
+                    int c;
+                    while ((c = getchar()) != '\n' && c != EOF) { }
                 }
 
                 // Prompt the user for the URL
@@ -372,9 +381,6 @@ int main() {
             //------------------------------------------------3333333----------------------------------------------
             if (choice == 3) {
 
-                int c;
-                while ((c = getchar()) != '\n' && c != EOF) { }
-
                 char input[256]; // Assuming a fixed-size buffer for input
 
                 downFolderPath(NULL, false);
@@ -396,10 +402,6 @@ int main() {
 
                 downFolderPath(input, true);
 
-
-                int b;
-                while ((b = getchar()) != '\n' && b != EOF) { }
-
             }
 
             //------------------------------------------------44444444------------------------------------------------
@@ -412,14 +414,14 @@ int main() {
 
     }
 
-    printf("Program konci! Cakanie na ukoncenie vlaken");
+    printf("Program konci! Cakanie na ukoncenie vlaken\n");
     // Čakanie na ukončenie vlákien
     for (int i = 0; i < pocetVlakien; ++i) {
         if (pthread_join(vlakna[i].id, NULL) != 0) {
             fprintf(stderr, "Chyba pri čakaní na vlákno.\n");
-            free((void *)vlakna[i].url);
             return 1;
         }
+        free((void *)vlakna[i].url);
     }
 
     return 0;
