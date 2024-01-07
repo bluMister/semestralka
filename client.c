@@ -20,7 +20,7 @@ typedef struct {
 } VlaknoInfo;
 
 //download logger
-void logger(char *filename, char *log, bool write) {
+void logger(char *log, bool write) {
 
     if (write) {
         time_t t;
@@ -36,7 +36,7 @@ void logger(char *filename, char *log, bool write) {
         strcat(buffer, log);
 
         // Open a file for writing
-        FILE *file = fopen(filename, "a");
+        FILE *file = fopen("logger.txt", "a");
 
         if (file == NULL) {
             printf("Error opening file!\n");
@@ -48,23 +48,23 @@ void logger(char *filename, char *log, bool write) {
         // Close the file
         fclose(file);
     } else {
-        FILE *file = fopen(filename, "r");
+        FILE *file = fopen("logger.txt", "r");
 
         if (file == NULL) {
             printf("Error opening file for reading!\n");
-        } else {
-            // Read and display the contents of the file with the filename
-            printf("Contents of '%s':\n", filename);
-
-            char line[100];
-            while (fgets(line, sizeof(line), file) != NULL) {
-                printf("%s", line);
-            }
-
-            // Close the file
-            fclose(file);
         }
+
+        // Read and display the contents of the file
+        printf("current download history:\n");
+
+        char line[100];
+        while (fgets(line, sizeof(line), file) != NULL) {
+            printf("%s", line);
+        }
+        // Close the file
+        fclose(file);
     }
+
 }
 
 // Function to extract hostname and path from the URL
@@ -82,7 +82,7 @@ int parse_url(const char *url, char *hostname, char *path, int *is_https) {
 }
 
 //function to read download folder path from file
-char *loadDownFolderPath(char *filename, char *log, bool write, bool vypis) {
+char *downFolderPath(char *newPath, bool write) {
 
     if (write) {
         time_t t;
@@ -93,13 +93,13 @@ char *loadDownFolderPath(char *filename, char *log, bool write, bool vypis) {
         current_time = localtime(&t);
 
         // Open a file for writing
-        FILE *file = fopen(filename, "w");
+        FILE *file = fopen("downFolderPath.txt", "w");
 
         if (file == NULL) {
             printf("Error opening file!\n");
         }
 
-        strcat(buffer, log);
+        strcat(buffer, newPath);
 
         // Write the formatted date and time to the file
         fprintf(file, "%s\n", buffer);
@@ -110,22 +110,18 @@ char *loadDownFolderPath(char *filename, char *log, bool write, bool vypis) {
         return rt;
 
     } else {
-        FILE *file = fopen(filename, "r");
+        FILE *file = fopen("downFolderPath.txt", "r");
 
         if (file == NULL) {
             printf("Error opening file for reading!\n");
         }
 
         // Read and display the contents of the file
-        if (vypis) {
-            printf("Contents of '%s':\n", filename);
-        }
+        printf("Current download folder: ");
 
         char line[100];
         while (fgets(line, sizeof(line), file) != NULL) {
-            if (vypis) {
-                printf("%s", line);
-            }
+            printf("%s\n", line);
         }
 
         // Close the file
@@ -235,7 +231,7 @@ void *vlaknoFunkcia(void *arg) {
 
     // Open the output file with the extracted filename
     const char *filename = extract_filename(info->url);
-    const char *downPath = loadDownFolderPath("downFolderPath.txt", NULL, false, false);
+    const char *downPath = downFolderPath(NULL, false);
 
       printf("Sťahovanie súboru %s sa začalo.\n", filename);
 //    printf("%s\n", downPath);
@@ -243,8 +239,8 @@ void *vlaknoFunkcia(void *arg) {
     char finalPath[1024];
     strcpy(finalPath, downPath);
     strcat(finalPath, filename);
-    //printf("%s\n", finalPath);
-    logger("downHistory.txt", finalPath, true);
+    printf("%s\n", finalPath);
+    logger( finalPath, true);
     FILE *file = fopen(finalPath, "wb");
     if (file == NULL) {
         perror("Error opening output file");
@@ -376,9 +372,13 @@ int main() {
             //------------------------------------------------3333333----------------------------------------------
             if (choice == 3) {
 
+                int c;
+                while ((c = getchar()) != '\n' && c != EOF) { }
+
                 char input[256]; // Assuming a fixed-size buffer for input
 
-                printf("Enter text: ");
+                downFolderPath(NULL, false);
+                printf("Enter path to download folder: ");
 
                 if (fgets(input, sizeof(input), stdin) != NULL) {
                     // Remove the newline character at the end, if it exists
@@ -394,15 +394,17 @@ int main() {
                     return 1;
                 }
 
-                loadDownFolderPath("downFolderPath.txt", input, true, true);
-                loadDownFolderPath("downFolderPath.txt", NULL, false, true);
+                downFolderPath(input, true);
 
+
+                int b;
+                while ((b = getchar()) != '\n' && b != EOF) { }
 
             }
 
             //------------------------------------------------44444444------------------------------------------------
             if (choice == 4) {
-                logger("downHistory.txt", NULL, false);
+                logger(NULL, false);
             }
         }
         prvy = false;
