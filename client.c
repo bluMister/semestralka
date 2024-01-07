@@ -8,6 +8,7 @@
 #include <openssl/err.h>
 #include <pthread.h>
 #include <stdbool.h>
+#include <sys/stat.h>
 
 #define BUFFER_SIZE 1024
 #define MAX_VLAKIEN 100
@@ -80,17 +81,15 @@ int parse_url(const char *url, char *hostname, char *path, int *is_https) {
     fprintf(stderr, "Invalid URL format\n");
     return 1;
 }
-
+bool directoryExists(const char *path) {
+    struct stat info;
+    return stat(path, &info) == 0 && S_ISDIR(info.st_mode);
+}
 //function to read download folder path from file
 char *downFolderPath(char *newPath, bool write) {
 
     if (write) {
-        time_t t;
-        struct tm *current_time;
         char buffer[100];
-
-        time(&t);
-        current_time = localtime(&t);
 
         // Open a file for writing
         FILE *file = fopen("downFolderPath.txt", "w");
@@ -106,8 +105,8 @@ char *downFolderPath(char *newPath, bool write) {
 
         // Close the file
         fclose(file);
-        char *rt = buffer;
-        return rt;
+
+        return newPath;
 
     } else {
         FILE *file = fopen("downFolderPath.txt", "r");
@@ -285,13 +284,12 @@ void *vlaknoFunkcia(void *arg) {
     }
     close(sockfd);
 
-    printf("Download complete. File saved as %s\n", filename);
+    printf("Download complete. File saved as %s\n", finalPath);
 
     // ... vykonávajte ďalšie činnosti vo vlákne ...
     //printf("Vlákno s číslom %lu sa vykonalo. URL: %s\n", info->id, info->url);
     pthread_exit(NULL);
 
-    return 0;
 }
 
 int main() {
@@ -332,8 +330,8 @@ int main() {
                     printf("Zadaj za aky cas v minutach ma stahovanie zacat: ");
                     scanf("%d", &timer);
                     //Čistenie terminálu
-                    int c;
-                    while ((c = getchar()) != '\n' && c != EOF) { }
+                    int d;
+                    while ((d = getchar()) != '\n' && d != EOF) { }
                 }
 
                 // Prompt the user for the URL
@@ -398,6 +396,16 @@ int main() {
                 } else {
                     fprintf(stderr, "Error reading input\n");
                     return 1;
+                }
+
+                if (!directoryExists(input)) {
+                    // Create the directory if it doesn't exist
+                    if (mkdir(input, 0777) == -1) {
+                        // Check if there was an error creating the directory
+                        printf("Error creating directory.\n");
+                        exit(EXIT_FAILURE);
+                    }
+                    printf("Directory created successfully.\n");
                 }
 
                 downFolderPath(input, true);
