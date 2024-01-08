@@ -18,6 +18,7 @@ typedef struct {
     pthread_t id;
     int timer;
     const char *url;
+    pthread_mutex_t *mutex;
 } ThreadInfo;
 
 //download logger
@@ -312,7 +313,10 @@ void *threadFunc(void *arg) {
 
         logger( finalPath, true);
 
+        pthread_mutex_lock(info->mutex);
         FILE *file = fopen(finalPath, "wb");
+        pthread_mutex_unlock(info->mutex);
+
         if (file == NULL) {
             perror("Error opening local file for writing");
             close(sockfd);
@@ -430,7 +434,9 @@ void *threadFunc(void *arg) {
 
         logger(finalPath, true);
 
+        pthread_mutex_lock(info->mutex);
         FILE *file = fopen(finalPath, "wb");
+        pthread_mutex_unlock(info->mutex);
 
         if (file == NULL) {
             perror("Error opening local copy of file");
@@ -475,7 +481,7 @@ void *threadFunc(void *arg) {
 
     //End of thread
     free((void *)info->url);
-    printf("Snažím sa ukončiť vlákno");
+    printf("Thread is being terminated!\n");
     pthread_exit(NULL);
 
 }
@@ -484,6 +490,8 @@ int main() {
     ThreadInfo vlakna[MAX_VLAKIEN];
     int thread_count = 0;
 
+    pthread_mutex_t mutex;
+    pthread_mutex_init(&mutex, NULL);
 
     bool first = true; //Welcome text only at the beginning of the program
     int choice = 0;
@@ -547,6 +555,7 @@ int main() {
                 if (index < MAX_VLAKIEN) {
                     vlakna[index].timer = timer;
                     vlakna[index].url = strdup(url);
+                    vlakna[index].mutex = &mutex;
 
                     if (pthread_create(&vlakna[index].id, NULL, threadFunc, &vlakna[index]) != 0) {
                         fprintf(stderr, "Error with creating a download thread\n");
@@ -609,7 +618,14 @@ int main() {
 
     }
 
-    printf("Application has ended!\n");
+    printf("Application is ending!\n");
 
+    for (int i = 0; i < thread_count; ++i) {
+        pthread_join(vlakna[i].id, NULL);
+    }
+
+    pthread_mutex_destroy(&mutex);
+
+    printf("Application has ended!\n");
     return 0;
 }
