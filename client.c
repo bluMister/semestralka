@@ -26,7 +26,7 @@ void logger(char *log, bool write) {
     if (write) {
         time_t t;
         struct tm *current_time;
-        char buffer[100];
+        char buffer[1024];
 
         time(&t);
         current_time = localtime(&t);
@@ -58,7 +58,7 @@ void logger(char *log, bool write) {
         // Read and display the contents of the file
         printf("current download history:\n");
 
-        char line[100];
+        char line[1024];
         while (fgets(line, sizeof(line), file) != NULL) {
             printf("%s", line);
         }
@@ -69,7 +69,7 @@ void logger(char *log, bool write) {
 }
 
 // Function to extract hostname and path from the URL
-int parse_url(const char *url, char *hostname, char *path, int *is_https) {
+int parse_url(const char *url, char *hostname, char *path, bool *is_https) {
     if (sscanf(url, "http://%[^/]/%s", hostname, path) == 2) {
         *is_https = 0;
         return 0;
@@ -89,7 +89,7 @@ bool directoryExists(const char *path) {
 char *downFolderPath(char *newPath, bool write) {
 
     if (write) {
-        char buffer[100];
+        char buffer[1024];
 
         // Open a file for writing
         FILE *file = fopen("downFolderPath.txt", "w");
@@ -155,13 +155,170 @@ SSL_CTX *create_ssl_context() {
     return ctx;
 }
 
+// Function to extract ftpHost and ftpPath from the full FTP URL
+void parseFtpUrl(const char *fullUrl, char *ftpHost, char *ftpPath) {
+    // Check if the URL starts with "ftp://"
+    if (strncmp(fullUrl, "ftp://", 6) != 0) {
+        fprintf(stderr, "Invalid FTP URL. It should start with 'ftp://'\n");
+        ftpHost[0] = '\0';
+        ftpPath[0] = '\0';
+        return;
+    }
+
+    // Skip the "ftp://" prefix
+    const char *urlWithoutPrefix = fullUrl + 6;
+
+    // Find the first slash to separate ftpHost and ftpPath
+    const char *slashPosition = strchr(urlWithoutPrefix, '/');
+    if (slashPosition == NULL) {
+        fprintf(stderr, "Invalid FTP URL. Missing path after 'ftp://'\n");
+        ftpHost[0] = '\0';
+        ftpPath[0] = '\0';
+        return;
+    }
+
+    // Calculate the lengths of ftpHost and ftpPath
+    size_t hostLength = slashPosition - urlWithoutPrefix;
+    size_t pathLength = strlen(urlWithoutPrefix) - hostLength;
+
+    // Copy ftpHost and ftpPath to the provided buffers
+    strncpy(ftpHost, urlWithoutPrefix, hostLength);
+    ftpHost[hostLength] = '\0';
+
+    strncpy(ftpPath, slashPosition, pathLength);
+    ftpPath[pathLength] = '\0';
+}
+
 // Main thread function, processes the file download
 void *vlaknoFunkcia(void *arg) {
     VlaknoInfo *info = (VlaknoInfo *) arg;
 
-    char hostname[256];
-    char path[256];
-    int is_https;
+    char hostname[1024];
+    char path[1024];
+    bool is_https;
+
+    if (strncmp(info->url, "ftp://", 6) == 0) {
+        printf("downloading an FTP file'\n");
+
+        char ftpHost[BUFFER_SIZE];
+        char ftpPath[BUFFER_SIZE];
+
+        // Parse the FTP URL
+        parseFtpUrl(info->url, ftpHost, ftpPath);
+
+        // Check if parsing was successful
+        if (ftpHost[0] == '\0' || ftpPath[0] == '\0') {
+            perror("Error parsing the host");
+        }
+
+        struct hostent *host = gethostbyname(ftpHost);
+        if (host == NULL) {
+            perror("Error resolving host");
+        }
+
+        // Create socket
+        int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+        if (sockfd == -1) {
+            perror("Error creating socket");
+        }
+
+        // Initialize server address structure
+        struct sockaddr_in serverAddr;
+        serverAddr.sin_family = AF_INET;
+        serverAddr.sin_port = htons(21);
+        memcpy(&serverAddr.sin_addr.s_addr, host->h_addr, host->h_length);
+
+        // Connect to the server
+        if (connect(sockfd, (struct sockaddr *)&serverAddr, sizeof(serverAddr)) == -1) {
+            perror("Error connecting to server");
+            close(sockfd);
+        }
+
+        // Read welcome message
+        char response[BUFFER_SIZE];
+        if (read(sockfd, response, sizeof(response)) == -1) {
+            perror("Error reading from server");
+            close(sockfd);
+        }
+        printf("%s", response);
+
+        // Log in
+        if (strstr(response, "220 FTP Server") != NULL) {
+            char username[BUFFER_SIZE];
+            char password[BUFFER_SIZE];
+
+            // Prompt user for username and password
+            printf("Enter FTP username: ");
+            scanf("%s", username);
+            printf("Enter FTP password: ");
+            scanf("%s", password);
+
+            // Log in
+            char loginCommand[BUFFER_SIZE];
+            snprintf(loginCommand, sizeof(loginCommand), "USER %s\r\n", username);
+            write(sockfd, loginCommand, strlen(loginCommand));
+
+            snprintf(loginCommand, sizeof(loginCommand), "PASS %s\r\n", password);
+            write(sockfd, loginCommand, strlen(loginCommand));
+        }
+
+        // Change to binary mode
+        write(sockfd, "TYPE I\r\n", strlen("TYPE I\r\n"));
+
+        // Request the file
+        char fileCommand[BUFFER_SIZE];
+        snprintf(fileCommand, sizeof(fileCommand), "RETR %s\r\n", ftpPath);
+        write(sockfd, fileCommand, strlen(fileCommand));
+
+        // Open the output file with the extracted filename
+        const char *filename = extract_filename(info->url);
+        const char *downPath = downFolderPath(NULL, false);
+
+        printf("Downloading of %s has started!\n", filename);
+
+        char finalPath[1024];
+
+        strcpy(finalPath, downPath);
+        strcat(finalPath, filename);
+        printf("%s\n", finalPath);
+
+        logger( finalPath, true);
+
+        FILE *file = fopen(finalPath, "wb");
+        if (file == NULL) {
+            perror("Error opening local file for writing");
+            close(sockfd);
+        }
+
+        // Read and write file data
+        ssize_t bytesRead;
+
+        printf("download is starting\n");
+
+        while ((bytesRead = read(sockfd, response, sizeof(response))) > 0) {
+            fwrite(response, 1, bytesRead, file);
+        }
+
+        if (bytesRead == -1) {
+            perror("Error reading from server");
+        }
+
+        // Check if bytesRead is 0, indicating the end of the file
+        if (bytesRead == 0) {
+            printf("Download complete. File saved as %s\n", finalPath);
+        } else {
+            printf("Download incomplete or failed.\n");
+        }
+
+        // Close local file and socket
+        fflush(file);
+        fclose(file);
+        close(sockfd);
+
+        //printf("Download complete. File saved as %s\n", finalPath);
+
+        pthread_exit(NULL);
+    }
 
     // Parse URL to extract hostname and path
     if (parse_url(info->url, hostname, path, &is_https) != 0) {
@@ -256,6 +413,9 @@ void *vlaknoFunkcia(void *arg) {
     // Receive and save the file data
     char buffer[BUFFER_SIZE];
     ssize_t bytesRead;
+
+    printf("omba\n");
+
     if (is_https) {
         bytesRead = SSL_read(ssl, buffer, sizeof(buffer));
     } else {
@@ -264,6 +424,7 @@ void *vlaknoFunkcia(void *arg) {
 
     while (bytesRead > 0) {
         fwrite(buffer, 1, bytesRead, file);
+
         if (is_https) {
             bytesRead = SSL_read(ssl, buffer, sizeof(buffer));
         } else {
@@ -314,7 +475,7 @@ int main() {
             while ((c = getchar()) != '\n' && c != EOF) { }
 
             // Buffer to store user input
-            char url_buffer[256];
+            char url_buffer[1024];
 
             if (choice > 0 && choice < 3 && pocetVlakien <= MAX_VLAKIEN) {
 
@@ -373,7 +534,7 @@ int main() {
             //------------------------------------------------3333333----------------------------------------------
             if (choice == 3) {
 
-                char input[256]; // Assuming a fixed-size buffer for input
+                char input[1024]; // Assuming a fixed-size buffer for input
 
                 downFolderPath(NULL, false);
                 printf("Enter path to download folder: ");
