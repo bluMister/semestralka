@@ -18,7 +18,7 @@ typedef struct {
     pthread_t id;
     int timer;
     const char *url;
-} VlaknoInfo;
+} ThreadInfo;
 
 //download logger
 void logger(char *log, bool write) {
@@ -81,10 +81,12 @@ int parse_url(const char *url, char *hostname, char *path, bool *is_https) {
     fprintf(stderr, "Invalid URL format\n");
     return 1;
 }
+
 bool directoryExists(const char *path) {
     struct stat info;
     return stat(path, &info) == 0 && S_ISDIR(info.st_mode);
 }
+
 //function to read download folder path from file
 char *downFolderPath(char *newPath, bool write) {
 
@@ -190,8 +192,8 @@ void parseFtpUrl(const char *fullUrl, char *ftpHost, char *ftpPath) {
 }
 
 // Main thread function, processes the file download
-void *vlaknoFunkcia(void *arg) {
-    VlaknoInfo *info = (VlaknoInfo *) arg;
+void *threadFunc(void *arg) {
+    ThreadInfo *info = (ThreadInfo *) arg;
 
     char hostname[1024];
     char path[1024];
@@ -250,8 +252,17 @@ void *vlaknoFunkcia(void *arg) {
             // Prompt user for username and password
             printf("Enter FTP username: ");
             scanf("%s", username);
+
+            //console clean up, catching stuck input from keyboard
+            int c;
+            while ((c = getchar()) != '\n' && c != EOF) { }
+
             printf("Enter FTP password: ");
             scanf("%s", password);
+
+            //console clean up, catching stuck input from keyboard
+            int b;
+            while ((b = getchar()) != '\n' && b != EOF) { }
 
             // Log in
             char loginCommand[BUFFER_SIZE];
@@ -290,13 +301,16 @@ void *vlaknoFunkcia(void *arg) {
             close(sockfd);
         }
 
+        printf("download is starting\n");
+
         // Read and write file data
         ssize_t bytesRead;
 
-        printf("download is starting\n");
+        bytesRead = read(sockfd, response, sizeof(response));
 
-        while ((bytesRead = read(sockfd, response, sizeof(response))) > 0) {
+        while (bytesRead > 0) {
             fwrite(response, 1, bytesRead, file);
+            bytesRead = read(sockfd, response, sizeof(response));
         }
 
         if (bytesRead == -1) {
@@ -414,8 +428,6 @@ void *vlaknoFunkcia(void *arg) {
     char buffer[BUFFER_SIZE];
     ssize_t bytesRead;
 
-    printf("omba\n");
-
     if (is_https) {
         bytesRead = SSL_read(ssl, buffer, sizeof(buffer));
     } else {
@@ -433,6 +445,7 @@ void *vlaknoFunkcia(void *arg) {
     }
 
     // Clean up
+    fflush(file);
     fclose(file);
     if (is_https) {
         SSL_free(ssl);
@@ -448,17 +461,17 @@ void *vlaknoFunkcia(void *arg) {
 }
 
 int main() {
-    VlaknoInfo vlakna[MAX_VLAKIEN];
-    int pocetVlakien = 0;
+    ThreadInfo vlakna[MAX_VLAKIEN];
+    int thread_count = 0;
 
 
-    bool prvy = true; //Welcome text only at the beginning of the program
+    bool first = true; //Welcome text only at the beginning of the program
     int choice = 0;
     while (choice != 5) {
         if (choice != 5) {
 
             //download manager
-            if (prvy) {
+            if (first) {
                 printf("\nWelcome to POS Download Manager! \n Choose the action:\n");
             } else {
                 printf("Choose the next action:\n");
@@ -477,7 +490,7 @@ int main() {
             // Buffer to store user input
             char url_buffer[1024];
 
-            if (choice > 0 && choice < 3 && pocetVlakien <= MAX_VLAKIEN) {
+            if (choice > 0 && choice < 3 && thread_count <= MAX_VLAKIEN) {
 
                 int timer = 0;
 
@@ -515,19 +528,19 @@ int main() {
                     vlakna[index].timer = timer;
                     vlakna[index].url = strdup(url);
 
-                    if (pthread_create(&vlakna[index].id, NULL, vlaknoFunkcia, &vlakna[index]) != 0) {
+                    if (pthread_create(&vlakna[index].id, NULL, threadFunc, &vlakna[index]) != 0) {
                         fprintf(stderr, "Error with creating a download thread\n");
                         free((void *)vlakna[index].url);
                         return 1;
                     }
 
-                    pocetVlakien++;
+                    thread_count++;
                 } else {
                     printf("Too many files are being downloaded to start new download thread!\n");
                 }
 
             }
-            if (pocetVlakien > MAX_VLAKIEN) {
+            if (thread_count > MAX_VLAKIEN) {
                 printf("Maximum amount of download threads reached! \nWait with next download for previous ones to finish!\n");
             }
 
@@ -571,14 +584,14 @@ int main() {
                 logger(NULL, false);
             }
         }
-        prvy = false;
+        first = false;
 
 
     }
 
     printf("Application is terminating! Waiting for remaining downloads to finish...\n");
     // Waiting for threads to finish
-    for (int i = 0; i < pocetVlakien; ++i) {
+    for (int i = 0; i < thread_count; ++i) {
         if (pthread_join(vlakna[i].id, NULL) != 0) {
             fprintf(stderr, "Error while waiting for download thread\n");
             return 1;
