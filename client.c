@@ -93,6 +93,16 @@ char *downFolderPath(char *newPath, bool write) {
     if (write) {
         char buffer[1024];
 
+        size_t len = strlen(newPath);
+        if (newPath[len - 1] != '/'){
+            // If the last character is not a slash, create a new string with the slash added
+            char *temp = malloc(len + 2);
+            strcpy(temp, newPath);
+            temp[len] = '/';
+            temp[len + 1] = '\0';
+            strcpy(newPath, temp);
+        }
+
         // Open a file for writing
         FILE *file = fopen("downFolderPath.txt", "w");
 
