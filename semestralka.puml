@@ -1,32 +1,19 @@
 @startuml
 'class diagram
 
-class ThreadInfo {
-    - id: pthread_t
-    - timer: int
-    - url: const char*
-}
-
-class Logger {
-    + logger(char*, bool)
-}
-
-class UtilityFunctions {
-    + parse_url(const char*, char*, char*, bool*)
-    + directoryExists(const char*) : bool
-    + downFolderPath(char*, bool) : char*
-    + extract_filename(const char*) : const char*
-    + create_ssl_context() : SSL_CTX*
-    + parseFtpUrl(const char*, char*, char*)
-}
-
-class DownloadManager {
-    + threadFunc(void*)
+class client {
+    - BUFFER_SIZE
+    - MAX_VLAKIEN
+    -ThreadInfo
     + main()
+    + logger(char *log, bool write) : void
+    + parse_url(const char *url, char *hostname, char *path, bool *is_https) : int
+    + directoryExists(const char *path) : bool
+    + downFolderPath(char* newPath, bool write) : char*
+    + extract_filename(const char* url) : const char*
+    + create_ssl_context() : SSL_CTX*
+    + parseFtpUrl(const char *fullUrl, char *ftpHost, char *ftpPath) : void
+    + threadFunc(void *arg) : void
 }
-
-ThreadInfo -- Logger
-ThreadInfo -- UtilityFunctions
-ThreadInfo -- DownloadManager
 
 @enduml
