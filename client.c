@@ -114,7 +114,14 @@ char *downFolderPath(char *newPath, bool write) {
         FILE *file = fopen("downFolderPath.txt", "r");
 
         if (file == NULL) {
-            printf("Error opening path file for reading!\n");
+
+            file = fopen("downFolderPath.txt", "w");
+            fclose(file);
+
+            file = fopen("downFolderPath.txt", "r");
+            if (file == NULL) {
+                printf("Error opening path file for reading!\n");
+            }
         }
 
         // Read and display the contents of the file
