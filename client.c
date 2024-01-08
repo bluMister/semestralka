@@ -315,10 +315,10 @@ void *threadFunc(void *arg) {
 
         pthread_mutex_lock(info->mutex);
         FILE *file = fopen(finalPath, "wb");
-        pthread_mutex_unlock(info->mutex);
 
         if (file == NULL) {
             perror("Error opening local file for writing");
+            pthread_mutex_unlock(info->mutex);
             close(sockfd);
         }
 
@@ -348,6 +348,7 @@ void *threadFunc(void *arg) {
         // Close local file and socket
         fflush(file);
         fclose(file);
+        pthread_mutex_unlock(info->mutex);
         close(sockfd);
 
         printf("Download complete. File saved as %s\n", finalPath);
@@ -436,7 +437,6 @@ void *threadFunc(void *arg) {
 
         pthread_mutex_lock(info->mutex);
         FILE *file = fopen(finalPath, "wb");
-        pthread_mutex_unlock(info->mutex);
 
         if (file == NULL) {
             perror("Error opening local copy of file");
@@ -444,6 +444,7 @@ void *threadFunc(void *arg) {
                 SSL_free(ssl);
                 SSL_CTX_free(ssl_ctx);
             }
+            pthread_mutex_unlock(info->mutex);
             close(sockfd);
         }
 
@@ -475,7 +476,7 @@ void *threadFunc(void *arg) {
             SSL_CTX_free(ssl_ctx);
         }
         close(sockfd);
-
+        pthread_mutex_unlock(info->mutex);
         printf("Download complete. File saved as %s\n", finalPath);
     }
 
@@ -489,9 +490,6 @@ void *threadFunc(void *arg) {
 int main() {
     ThreadInfo vlakna[MAX_VLAKIEN];
     int thread_count = 0;
-
-    pthread_mutex_t mutex;
-    pthread_mutex_init(&mutex, NULL);
 
     bool first = true; //Welcome text only at the beginning of the program
     int choice = 0;
@@ -553,6 +551,9 @@ int main() {
                 }
 
                 if (index < MAX_VLAKIEN) {
+
+                    pthread_mutex_t mutex;
+                    pthread_mutex_init(&mutex, NULL);
                     vlakna[index].timer = timer;
                     vlakna[index].url = strdup(url);
                     vlakna[index].mutex = &mutex;
@@ -622,9 +623,8 @@ int main() {
 
     for (int i = 0; i < thread_count; ++i) {
         pthread_join(vlakna[i].id, NULL);
+        pthread_mutex_destroy(vlakna[i].mutex);
     }
-
-    pthread_mutex_destroy(&mutex);
 
     printf("Application has ended!\n");
     return 0;
