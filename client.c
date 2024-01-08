@@ -336,133 +336,136 @@ void *threadFunc(void *arg) {
         fclose(file);
         close(sockfd);
 
-        //printf("Download complete. File saved as %s\n", finalPath);
+        printf("Download complete. File saved as %s\n", finalPath);
 
-        pthread_exit(NULL);
-    }
-
-    // Parse URL to extract hostname and path
-    if (parse_url(info->url, hostname, path, &is_https) != 0) {
-    }
-
-    //check for timer and wait if necessary
-    if (info->timer > 0) {
-        sleep(info->timer * 60);
-    }
-
-    // Resolve hostname to IP address
-    struct hostent *server = gethostbyname(hostname);
-    if (server == NULL) {
-        perror("Error resolving hostname");
-    }
-
-    // Create a socket
-    int sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (sockfd == -1) {
-        perror("Error creating socket");
-    }
-
-    // Set up server address structure
-    struct sockaddr_in server_addr;
-    server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(is_https ? 443 : 80);
-    memcpy(&server_addr.sin_addr.s_addr, server->h_addr, server->h_length);
-
-    // Connect to the server
-    if (connect(sockfd, (struct sockaddr *) &server_addr, sizeof(server_addr)) == -1) {
-        perror("Error connecting to server");
-        close(sockfd);
-    }
-
-    // If using HTTPS, set up SSL
-    SSL_CTX *ssl_ctx = NULL;
-    SSL *ssl = NULL;
-    if (is_https) {
-        SSL_library_init();
-        ssl_ctx = create_ssl_context();
-        if (!ssl_ctx) {
-            close(sockfd);
-        }
-
-        ssl = SSL_new(ssl_ctx);
-        SSL_set_fd(ssl, sockfd);
-
-        if (SSL_connect(ssl) != 1) {
-            ERR_print_errors_fp(stderr);
-            SSL_free(ssl);
-            SSL_CTX_free(ssl_ctx);
-            close(sockfd);
-        }
-    }
-
-    // Send HTTP GET request
-    if (is_https) {
-        SSL_write(ssl, "GET /", 5);
-        SSL_write(ssl, path, strlen(path));
-        SSL_write(ssl, " HTTP/1.1\r\nHost: ", 17);
-        SSL_write(ssl, hostname, strlen(hostname));
-        SSL_write(ssl, "\r\n\r\n", 4);
+        //pthread_exit(NULL);
     } else {
-        dprintf(sockfd, "GET /%s HTTP/1.1\r\nHost: %s\r\n\r\n", path, hostname);
-    }
 
-    // Open the output file with the extracted filename
-    const char *filename = extract_filename(info->url);
-    const char *downPath = downFolderPath(NULL, false);
+        // Parse URL to extract hostname and path
+        if (parse_url(info->url, hostname, path, &is_https) != 0) {
+        }
 
-      printf("Downloading of %s has started!\n", filename);
+        //check for timer and wait if necessary
+        if (info->timer > 0) {
+            sleep(info->timer * 60);
+        }
 
-    char finalPath[1024];
+        // Resolve hostname to IP address
+        struct hostent *server = gethostbyname(hostname);
+        if (server == NULL) {
+            perror("Error resolving hostname");
+        }
 
-    strcpy(finalPath, downPath);
-    strcat(finalPath, filename);
-    printf("%s\n", finalPath);
+        // Create a socket
+        int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+        if (sockfd == -1) {
+            perror("Error creating socket");
+        }
 
-    logger( finalPath, true);
+        // Set up server address structure
+        struct sockaddr_in server_addr;
+        server_addr.sin_family = AF_INET;
+        server_addr.sin_port = htons(is_https ? 443 : 80);
+        memcpy(&server_addr.sin_addr.s_addr, server->h_addr, server->h_length);
 
-    FILE *file = fopen(finalPath, "wb");
+        // Connect to the server
+        if (connect(sockfd, (struct sockaddr *) &server_addr, sizeof(server_addr)) == -1) {
+            perror("Error connecting to server");
+            close(sockfd);
+        }
 
-    if (file == NULL) {
-        perror("Error opening local copy of file");
+        // If using HTTPS, set up SSL
+        SSL_CTX *ssl_ctx = NULL;
+        SSL *ssl = NULL;
         if (is_https) {
-            SSL_free(ssl);
-            SSL_CTX_free(ssl_ctx);
+            SSL_library_init();
+            ssl_ctx = create_ssl_context();
+            if (!ssl_ctx) {
+                close(sockfd);
+            }
+
+            ssl = SSL_new(ssl_ctx);
+            SSL_set_fd(ssl, sockfd);
+
+            if (SSL_connect(ssl) != 1) {
+                ERR_print_errors_fp(stderr);
+                SSL_free(ssl);
+                SSL_CTX_free(ssl_ctx);
+                close(sockfd);
+            }
         }
-        close(sockfd);
-    }
 
-    // Receive and save the file data
-    char buffer[BUFFER_SIZE];
-    ssize_t bytesRead;
+        // Send HTTP GET request
+        if (is_https) {
+            SSL_write(ssl, "GET /", 5);
+            SSL_write(ssl, path, strlen(path));
+            SSL_write(ssl, " HTTP/1.1\r\nHost: ", 17);
+            SSL_write(ssl, hostname, strlen(hostname));
+            SSL_write(ssl, "\r\n\r\n", 4);
+        } else {
+            dprintf(sockfd, "GET /%s HTTP/1.1\r\nHost: %s\r\n\r\n", path, hostname);
+        }
 
-    if (is_https) {
-        bytesRead = SSL_read(ssl, buffer, sizeof(buffer));
-    } else {
-        bytesRead = read(sockfd, buffer, sizeof(buffer));
-    }
+        // Open the output file with the extracted filename
+        const char *filename = extract_filename(info->url);
+        const char *downPath = downFolderPath(NULL, false);
 
-    while (bytesRead > 0) {
-        fwrite(buffer, 1, bytesRead, file);
+        printf("Downloading of %s has started!\n", filename);
+
+        char finalPath[1024];
+
+        strcpy(finalPath, downPath);
+        strcat(finalPath, filename);
+        printf("%s\n", finalPath);
+
+        logger(finalPath, true);
+
+        FILE *file = fopen(finalPath, "wb");
+
+        if (file == NULL) {
+            perror("Error opening local copy of file");
+            if (is_https) {
+                SSL_free(ssl);
+                SSL_CTX_free(ssl_ctx);
+            }
+            close(sockfd);
+        }
+
+        // Receive and save the file data
+        char buffer[BUFFER_SIZE];
+        ssize_t bytesRead;
 
         if (is_https) {
             bytesRead = SSL_read(ssl, buffer, sizeof(buffer));
         } else {
             bytesRead = read(sockfd, buffer, sizeof(buffer));
         }
-    }
 
-    // Clean up
-    fflush(file);
-    fclose(file);
-    if (is_https) {
-        SSL_free(ssl);
-        SSL_CTX_free(ssl_ctx);
-    }
-    close(sockfd);
+        while (bytesRead > 0) {
+            fwrite(buffer, 1, bytesRead, file);
 
-    printf("Download complete. File saved as %s\n", finalPath);
+            if (is_https) {
+                bytesRead = SSL_read(ssl, buffer, sizeof(buffer));
+            } else {
+                bytesRead = read(sockfd, buffer, sizeof(buffer));
+            }
+        }
+
+        // Clean up
+        fflush(file);
+        fclose(file);
+        if (is_https) {
+            SSL_free(ssl);
+            SSL_CTX_free(ssl_ctx);
+        }
+        close(sockfd);
+
+        printf("Download complete. File saved as %s\n", finalPath);
+    }
 
     //End of thread
+    free((void *)info->url);
+    printf("Snažím sa ukončiť vlákno");
     pthread_exit(NULL);
 
 }
@@ -596,15 +599,7 @@ int main() {
 
     }
 
-    printf("Application is terminating! Waiting for remaining downloads to finish...\n");
-    // Waiting for threads to finish
-    for (int i = 0; i < thread_count; ++i) {
-        if (pthread_join(vlakna[i].id, NULL) != 0) {
-            fprintf(stderr, "Error while waiting for download thread\n");
-            return 1;
-        }
-        free((void *)vlakna[i].url);
-    }
+    printf("Application has ended!\n");
 
     return 0;
 }
