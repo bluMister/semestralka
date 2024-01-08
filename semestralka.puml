@@ -2,6 +2,9 @@
 'class diagram
 
 class client {
+    - BUFFER_SIZE
+    - MAX_VLAKIEN
+    -ThreadInfo
     + main()
     + logger(char *log, bool write) : void
     + parse_url(const char *url, char *hostname, char *path, bool *is_https) : int
